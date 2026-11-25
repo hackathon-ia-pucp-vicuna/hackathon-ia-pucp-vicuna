@@ -31,7 +31,7 @@ Criterios de aceptación:
 HU: HU-01 · Responsable: @maxrodev
 Criterios de aceptación:
 - [ ] Los 4 integrantes aprueban en el PR o en un comentario.
-- [ ] Las HU y criterios de `historias-usuario.md` están en main.
+- [ ] Las HU y criterios de `historias-usuario.md` están en `develop` (pasan a `main` al cerrar el sprint).
 - [ ] No quedan preguntas abiertas en la spec.
 
 ### T05 · Equipo — Contactar usuario real y reservar mentorías
@@ -156,7 +156,7 @@ Criterios de aceptación:
 
 ## Sprint 2 · Producto mínimo y modelo final (29 nov–3 dic)
 
-### T17 · Producto — Streamlit: zona, tabla por hora, GFS vs modelo, mapa
+### T17 · Producto — Streamlit: zona, tabla por hora, GFS vs modelo
 HU: HU-02 · Responsable: @DuDu-0912
 Criterios de aceptación:
 - [ ] Se elige zona y cultivo y se ve nivel, hora de inicio y duración.
@@ -225,6 +225,14 @@ HU: HU-08 · Responsable: @maxrodev
 Criterios de aceptación:
 - [ ] Cada PR corre pytest y ruff; main está en verde.
 - [ ] `docs/licencias.md` lista cada dependencia y modelo con su licencia.
+
+### T48 · Producto — Envío programado del aviso con GitHub Actions
+HU: HU-05 · Responsable: @maxrodev
+Depende de: T18 (script de envío) y T38 (bot y canal).
+Criterios de aceptación:
+- [ ] Un workflow de GitHub Actions ejecuta el script de T18 todos los días a las 17:00 de Lima (22:00 UTC).
+- [ ] El token se lee de los secretos de GitHub; no aparece en el repo ni en los logs del workflow.
+- [ ] Si el workflow falla, el README explica cómo correr el script a mano.
 
 ### T47 · Modelo — Congelar el modelo final (corte de experimentos)
 HU: HU-09 · Responsable: @johancg04
@@ -338,8 +346,8 @@ Criterios de aceptación:
 | Responsable | Tareas | N.º |
 |---|---|---|
 | @johancg04 | T01, T02, T03, T08, T09, T10, T20, T24, T25, T39, T43, T47 | 12 |
-| @maxrodev | T04, T06, T27, T29, T30, T31, T32, T33, T34, T40, T42, T46 | 12 |
+| @maxrodev | T04, T06, T27, T29, T30, T31, T32, T33, T34, T40, T42, T46, T48 | 13 |
 | @DuDu-0912 | T05, T17, T18, T19, T22, T23, T26, T28, T37, T38, T41, T44 | 12 |
 | @lalo-dev8 | T07, T11, T12, T13, T14, T15, T16, T21, T35, T36, T45 | 11 |
 
-Total: 47 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
+Total: 48 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.

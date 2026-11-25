@@ -1,6 +1,6 @@
 # Spec 001 — Helada Andina
 
-Estado: borrador para aprobación del equipo. Los umbrales y mensajes de ejemplo son ilustrativos y deben validarse con fuentes técnicas y con usuarios reales.
+Estado: **aprobada** por el equipo (PR #2, T04). Los umbrales son una referencia general hasta que T07 traiga una fuente verificada; los mensajes deben validarse con usuarios reales (T28).
 
 ## Usuario y problema
 - **Usuario:** agricultores y técnicos agrarios del Callejón de Huaylas (Áncash). Cultivo inicial: papa.
@@ -32,6 +32,18 @@ Varios cultivos, mapa de riesgo por zona (folium + OpenStreetMap), versión en q
 - La referencia general es T ≤ 0 °C. Los umbrales por cultivo viven en `app/frost/thresholds.yaml` con `fuente` y `validado`. Sin fuente verificada, solo se muestra la referencia general, rotulada como tal.
 - El modelo no predice lluvia, nubosidad, radiación ni ráfagas: el mensaje lo declara.
 - El producto usa el mismo modelo y los mismos pesos que Kaggle, solo a través de `predecir()`.
+
+## Decisiones aprobadas (PR #2)
+1. **Niveles de riesgo** (sobre la T mínima de la noche en la celda de la zona): más de 2 °C = sin riesgo; entre 0 y 2 °C = vigilancia; 0 °C o menos = helada probable. Se rotulan como "referencia general" hasta que T07 traiga una fuente.
+2. **Segunda confirmación:** reemplaza a la anterior (vale la última). Zona y fecha forman una clave única en SQLite.
+3. **Telegram:** un solo canal para todas las zonas. El envío lo programa GitHub Actions a las 17:00 de Lima (22:00 UTC), con el token en los secretos de GitHub (T48). Si falla, el script se corre a mano.
+4. **"GFS crudo" de una zona:** el valor del GFS interpolado a la celda de 3 km, igual que en T36.
+5. **Horas de la noche:** todas las horas entre 00 y 12 UTC (19:00 a 07:00 en Lima).
+6. **"Esta noche":** antes de las 07:00 (Lima) se muestra la noche en curso; desde las 07:00, la siguiente.
+7. **Mapa:** fuera del alcance mínimo (es una ampliación).
+8. **Zona → celda:** se usa la celda del DEM tal cual y se muestra la diferencia entre la altura de la localidad y la de la celda. La corrección por altura queda como ampliación.
+9. **Contrato de `predecir()`:** `predecir(Xw, horas_utc) -> Y`, con `Xw` (N, 3, 17, 13, 4) en unidades físicas (RH %, T K, U m/s, V m/s; fila 0 = norte), `horas_utc` (N,) y `Y` (N, 70, 35, 4) en unidades físicas (fila 0 = sur). `static.npz` y los pesos se cargan dentro de `app/predict.py`.
+10. **Rama base:** los PR van a `develop`; `develop` se fusiona en `main` al cerrar cada sprint.
 
 ## Criterios de aceptación
 - [ ] Con datos reales de Open-Meteo (caché activa) el flujo completo corre en menos de unos segundos por zona.

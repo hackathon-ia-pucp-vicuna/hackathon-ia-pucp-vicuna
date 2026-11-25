@@ -36,7 +36,7 @@ Formato de criterios: Dado / Cuando / Entonces, o una condición verificable (n�
 
 **HU-06 · Confirmar si hubo helada** — Como agricultor, quiero confirmar con sí/no al día siguiente si hubo helada, para mejorar los umbrales.
 - La confirmación se guarda con zona y fecha en SQLite, sin datos personales.
-- Una segunda confirmación de la misma zona y fecha reemplaza o rechaza la anterior, no la duplica.
+- Una segunda confirmación de la misma zona y fecha reemplaza a la anterior (vale la última), no la duplica.
 
 **HU-07 · Elegir mi zona y cultivo** — Como agricultor, quiero elegir mi localidad y cultivo, para ver el aviso de mi zona.
 - Hay al menos 3 localidades del Callejón de Huaylas, cada una mapeada a su celda de la grilla y a su elevación del DEM.
@@ -62,14 +62,14 @@ Formato de criterios: Dado / Cuando / Entonces, o una condición verificable (n�
 ## Matriz HU → tareas
 | HU | Tareas |
 |---|---|
-| HU-01 | T07, T12, T15, T35 |
+| HU-01 | T04, T07, T12, T15, T35 |
 | HU-02 | T15, T17, T44 |
-| HU-03 | T05, T16, T28 |
+| HU-03 | T05, T16, T23, T28 |
 | HU-04 | T13, T17, T36 |
-| HU-05 | T18, T38 |
+| HU-05 | T18, T38, T48 |
 | HU-06 | T19 |
 | HU-07 | T14, T17 |
-| HU-08 | T03, T06, T27, T29, T30, T40, T41 |
+| HU-08 | T03, T06, T27, T29, T30, T40 |
 | HU-09 | T01–T03, T08–T11, T20, T21, T24, T25, T39, T45, T47 |
-| HU-10 | T27, T31, T32, T33, T42, T43, T46 |
+| HU-10 | T27, T31, T32, T33, T34, T41, T42, T43, T46 |
 | HU-11 | T22, T26, T37 |
