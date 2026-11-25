@@ -2,12 +2,15 @@
 Único punto de entrada al modelo para el producto: `predecir()`.
 
 Usa la MISMA red y los MISMOS pesos que la submission de Kaggle (copia de `Net` del starter).
-El test de paridad con el notebook (`tests/test_paridad.py`) llega en T12.
+`tests/test_paridad.py` comprueba que esta copia da la misma salida que la red del notebook (T12).
 
 Archivos que necesita (ninguno se genera aquí):
   models/modelo.pt          state_dict de la red (T03)
   models/estadisticas.npz   mu_x, sd_x, clim (24,70,35,4), anom_sd del entrenamiento (T03)
   data/static.npz           DEM y grillas de la competencia (se baja de Kaggle; no va al repo)
+
+Medir el tiempo en CPU para 24 horas (con los archivos reales):
+  python app/predict.py
 """
 from functools import lru_cache
 from pathlib import Path
@@ -25,8 +28,8 @@ class ModeloNoDisponible(RuntimeError):
 
 
 def _exigir(ruta, que):
-    if not ruta.exists():
-        raise ModeloNoDisponible(f"No se encontró {que} ({ruta.relative_to(RAIZ)}).")
+    if not Path(ruta).exists():
+        raise ModeloNoDisponible(f"No se encontró {que} ({Path(ruta).name}).")
 
 
 @lru_cache(maxsize=1)
@@ -36,16 +39,14 @@ def cargar_static():
     return {k: st[k] for k in st.files}
 
 
-@lru_cache(maxsize=1)
-def _cargar():
+def construir_red(st):
+    """
+    Red `Net` del starter con la grilla y el DEM de `st` (dict con gfs_lats, gfs_lons, wrf_lats,
+    wrf_lons, dem). Pesos sin cargar. Separada de _cargar() para poder probar la paridad.
+    """
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-
-    _exigir(RUTA_PESOS, "los pesos del modelo")
-    _exigir(RUTA_ESTADISTICAS, "las estadísticas de normalización")
-    st = cargar_static()
-    est = np.load(RUTA_ESTADISTICAS)
 
     # Igual que en el starter: grilla WRF dentro de la grilla GFS (para grid_sample) y DEM normalizado.
     glat, glon = st["gfs_lats"], st["gfs_lons"]          # GFS: fila 0 = norte
@@ -81,7 +82,17 @@ def _cargar():
             f = torch.cat([f, self.dem.expand(B, -1, -1, -1), self.static.expand(B, -1, -1, -1)], 1)
             return self.dec(f).permute(0, 2, 3, 1)  # (B,70,35,4) anomalía normalizada
 
-    modelo = Net()
+    return Net()
+
+
+@lru_cache(maxsize=1)
+def _cargar():
+    import torch
+
+    _exigir(RUTA_PESOS, "los pesos del modelo")
+    _exigir(RUTA_ESTADISTICAS, "las estadísticas de normalización")
+    est = np.load(RUTA_ESTADISTICAS)
+    modelo = construir_red(cargar_static())
     modelo.load_state_dict(torch.load(RUTA_PESOS, map_location="cpu", weights_only=True))
     modelo.eval()
     stats = {k: est[k].astype(np.float32) for k in ("mu_x", "sd_x", "clim", "anom_sd")}
@@ -98,6 +109,10 @@ def predecir(Xw, horas_utc, lote=64):
     torch, modelo, s = _cargar()
     Xw = np.asarray(Xw, dtype=np.float32)
     h_all = np.asarray(horas_utc, dtype=np.int64)
+    if Xw.ndim != 5 or Xw.shape[1:] != (3, 17, 13, 4):
+        raise ValueError(f"Se esperaban ventanas (N, 3, 17, 13, 4) y llegó {Xw.shape}.")
+    if len(h_all) != len(Xw):
+        raise ValueError("Debe haber una hora UTC por ventana.")
     salida = []
     with torch.no_grad():
         for i in range(0, len(Xw), lote):
@@ -105,4 +120,27 @@ def predecir(Xw, horas_utc, lote=64):
             h = h_all[i:i + lote]
             anom = modelo(x, torch.from_numpy(h).float()).numpy()
             salida.append(s["clim"][h] + anom * s["anom_sd"])
+    if not salida:
+        return np.empty((0, 70, 35, 4), np.float32)
     return np.concatenate(salida)
+
+
+def medir_24h(repeticiones=3):
+    """Segundos (mejor de `repeticiones`) para predecir 24 horas en CPU, con entrada típica."""
+    import time
+
+    _, _, s = _cargar()
+    rng = np.random.default_rng(0)
+    Xw = (s["mu_x"] + s["sd_x"] * rng.standard_normal((24, 3, 17, 13, 4))).astype(np.float32)
+    horas = np.arange(24)
+    predecir(Xw[:1], horas[:1])                      # calentamiento
+    tiempos = []
+    for _ in range(repeticiones):
+        t0 = time.perf_counter()
+        predecir(Xw, horas)
+        tiempos.append(time.perf_counter() - t0)
+    return min(tiempos)
+
+
+if __name__ == "__main__":
+    print(f"predecir() en CPU · 24 horas: {medir_24h():.3f} s")
