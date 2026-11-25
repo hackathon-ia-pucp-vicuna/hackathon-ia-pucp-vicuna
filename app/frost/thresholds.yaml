@@ -1,0 +1,11 @@
+# Umbrales de helada por cultivo (v0 · T44). Los define y valida T07/T16 (@lalo-dev8).
+# Sin fuente verificada solo se usa la referencia general de 0 °C, rotulada como tal (spec 001).
+# Niveles provisionales hasta aprobar la spec (PR #2, pregunta 1), sobre la T mínima nocturna:
+#   sin riesgo > vigilancia_c · vigilancia entre helada_c y vigilancia_c · helada probable <= helada_c
+
+papa:
+  nombre: Papa
+  helada_c: 0.0          # referencia general, no específica del cultivo
+  vigilancia_c: 2.0      # provisional
+  fuente: null
+  validado: false
