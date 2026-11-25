@@ -1,0 +1,6 @@
+# Prueba de despliegue T22 (Streamlit Community Cloud, Python 3.12).
+# PyTorch solo CPU: el índice de PyTorch evita bajar las librerías de CUDA.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1+cpu
+streamlit==1.40.2
+numpy==2.1.3
