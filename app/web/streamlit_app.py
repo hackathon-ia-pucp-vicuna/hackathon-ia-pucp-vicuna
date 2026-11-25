@@ -1,158 +1,109 @@
 """
-T22 · Prueba de despliegue gratuito con PyTorch en CPU (HU-11).
+Helada Andina · App v0 de punta a punta (T44 · HU-02).
 
-App mínima para medir, en el hosting gratuito, el tiempo de arranque y la memoria
-de una red del mismo tamaño que la del starter (`Net`, train/starter_notebook.ipynb).
+    zona → Open-Meteo (GFS, con caché) → predecir() → reglas → mensaje
 
-- Pesos ALEATORIOS con semilla fija: no son el modelo de Kaggle ni predicen nada real.
-- Entrada SINTÉTICA de 24 horas: no usa la data oficial (no va al hosting) ni Open-Meteo.
-
-Ejecutar en local:
-    pip install -r app/web/requirements.txt
+Ejecutar desde la raíz del repo (Python 3.12):
+    pip install -r requirements-app.txt
     streamlit run app/web/streamlit_app.py
 """
 import os
-import platform
 import sys
 import time
+from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import streamlit as st
 
-T_SCRIPT = time.time()
+APP = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(APP))
+
+from frost.advice import AVISO_LIMITES, mensaje  # noqa: E402
+from frost.rules import (ZonaFueraDeGrilla, a_hora_lima, cargar_yaml, celda_de_zona,  # noqa: E402
+                         evaluar_noche, horas_de_la_noche, noche_objetivo)
+from gfs_forecast import get_gfs_forecast, make_windows  # noqa: E402
+from predict import ModeloNoDisponible, cargar_static, predecir  # noqa: E402
+
+CACHE_GFS = APP / "gfs_cache.npz"     # en .gitignore
+CACHE_HORAS = 3
 
 
-def proceso_inicio():
-    """Hora de inicio del proceso (Linux, vía /proc); None si no se puede leer."""
+def pronostico_gfs():
+    """(X, times, aviso). Si Open-Meteo falla, usa la última caché con un aviso; si no hay, lanza el error."""
     try:
-        return os.stat(f"/proc/{os.getpid()}").st_ctime
-    except OSError:
-        return None
+        X, t = get_gfs_forecast(forecast_hours=48, past_hours=14,
+                                cache_path=str(CACHE_GFS), cache_max_age_h=CACHE_HORAS)
+        return X, t, None
+    except Exception:
+        if CACHE_GFS.exists():
+            d = np.load(CACHE_GFS)
+            horas = (time.time() - os.path.getmtime(CACHE_GFS)) / 3600
+            return d["X"], d["times"], (
+                f"No se pudo conectar con el servicio de pronóstico. "
+                f"Se muestra el último pronóstico guardado (de hace {horas:.0f} h)."
+            )
+        raise
 
 
-def memoria_mb():
-    """(RSS actual, RSS máximo) en MB. En Linux ru_maxrss viene en KB."""
-    actual = None
-    try:
-        with open("/proc/self/status") as f:
-            for linea in f:
-                if linea.startswith("VmRSS:"):
-                    actual = int(linea.split()[1]) / 1024
-    except OSError:
-        pass
-    try:
-        import resource                                        # solo existe en Linux/macOS
-        maximo = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-    except ImportError:
-        maximo = None
-    return actual, maximo
+st.set_page_config(page_title="Helada Andina", page_icon="❄️")
+st.title("Helada Andina")
+st.caption("Aviso de helada para la papa en el Callejón de Huaylas · versión 0")
 
+zonas = cargar_yaml("zones.yaml")
+umbral = cargar_yaml("thresholds.yaml")["papa"]
+clave = st.selectbox("Localidad", list(zonas), format_func=lambda k: zonas[k]["nombre"])
+zona = zonas[clave]
 
-@st.cache_resource
-def cargar_y_medir():
-    """Importa torch, crea la red y corre 24 horas de inferencia. Se ejecuta una vez por proceso."""
-    t0 = time.time()
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-    t_import = time.time() - t0
+try:
+    static = cargar_static()
+    fila, col = celda_de_zona(zona["lat"], zona["lon"], static["wrf_lats"], static["wrf_lons"])
 
-    torch.manual_seed(0)
-    torch.set_num_threads(max(1, os.cpu_count() or 1))
+    with st.spinner("Descargando el pronóstico…"):
+        X, times, aviso = pronostico_gfs()
+    if aviso:
+        st.warning(aviso)
 
-    # Grilla WRF (70x35) dentro de la grilla GFS (17x13) y DEM sintéticos, con las formas reales.
-    gy, gx = torch.meshgrid(torch.linspace(-0.9, 0.9, 70), torch.linspace(-0.9, 0.9, 35), indexing="ij")
-    grid = torch.stack([gx, gy], -1)[None]                     # (1, 70, 35, 2)
-    dem = torch.randn(1, 1, 70, 35)
+    noche = noche_objetivo()
+    Xw, _ = make_windows(X, times)
+    m = horas_de_la_noche(times, noche)
+    if not m.any():
+        st.error("El pronóstico disponible no cubre la noche de hoy. Intenta de nuevo más tarde.")
+        st.stop()
 
-    class Net(nn.Module):
-        """Copia de la arquitectura del starter; grilla y DEM como buffers en vez de globales."""
+    t_noche = np.asarray(times)[m].astype(str)
+    with st.spinner("Calculando con el modelo…"):
+        Y = predecir(Xw[m], [int(t[8:10]) for t in t_noche])
+    t_celda = Y[:, fila, col, 1] - 273.15
+    r = evaluar_noche(t_celda, t_noche, umbral)
 
-        def __init__(self, w=64):
-            super().__init__()
-            self.enc = nn.Sequential(nn.Conv2d(14, w, 3, padding=1), nn.GELU(), nn.Conv2d(w, w, 3, padding=1), nn.GELU())
-            self.static = nn.Parameter(torch.zeros(1, 8, 70, 35))
-            self.dec = nn.Sequential(
-                nn.Conv2d(w + 9, w, 3, padding=1), nn.GELU(),
-                nn.Conv2d(w, w, 3, padding=1), nn.GELU(),
-                nn.Conv2d(w, 4, 1))
-            self.register_buffer("grid", grid)
-            self.register_buffer("dem", dem)
+except ModeloNoDisponible as e:
+    st.error(f"El modelo no está disponible. {e}")
+    st.stop()
+except ZonaFueraDeGrilla as e:
+    st.error(str(e))
+    st.stop()
+except Exception:
+    st.error("No se pudo obtener el pronóstico: revisa tu conexión a internet e inténtalo de nuevo en unos minutos.")
+    st.stop()
 
-        def forward(self, x, h):                               # x: (B,3,17,13,4), h: (B,) hora UTC
-            B = x.shape[0]
-            x = x.permute(0, 1, 4, 2, 3).reshape(B, 12, 17, 13)
-            ang = 2 * np.pi * h / 24
-            hh = torch.stack([torch.sin(ang), torch.cos(ang)], 1)[..., None, None].expand(B, 2, 17, 13)
-            f = self.enc(torch.cat([x, hh], 1))
-            f = F.grid_sample(f, self.grid.expand(B, -1, -1, -1), align_corners=True)
-            f = torch.cat([f, self.dem.expand(B, -1, -1, -1), self.static.expand(B, -1, -1, -1)], 1)
-            return self.dec(f).permute(0, 2, 3, 1)             # (B, 70, 35, 4)
+inicio_noche = a_hora_lima(f"{noche}00")
+st.subheader(f"Noche del {inicio_noche:%d/%m} al {inicio_noche + pd.Timedelta(days=1):%d/%m} · {zona['nombre']}")
 
-    t1 = time.time()
-    modelo = Net().eval()
-    t_modelo = time.time() - t1
-    n_params = sum(p.numel() for p in modelo.parameters())
-
-    x = torch.randn(24, 3, 17, 13, 4)
-    h = torch.arange(24, dtype=torch.float32)
-    t2 = time.time()
-    with torch.no_grad():
-        y = modelo(x, h)
-    t_inferencia = time.time() - t2
-
-    with torch.no_grad():                                       # segunda pasada: ya "en caliente"
-        t3 = time.time()
-        modelo(x, h)
-        t_inferencia_2 = time.time() - t3
-
-    return {
-        "torch": torch.__version__,
-        "cuda": torch.cuda.is_available(),
-        "hilos": torch.get_num_threads(),
-        "params": n_params,
-        "pesos_mb": n_params * 4 / 1024**2,
-        "salida": tuple(y.shape),
-        "t_import": t_import,
-        "t_modelo": t_modelo,
-        "t_inferencia": t_inferencia,
-        "t_inferencia_2": t_inferencia_2,
-        "t_total_carga": time.time() - t0,
-        "proceso_inicio": proceso_inicio(),
-        "listo_en": time.time(),
-    }
-
-
-st.set_page_config(page_title="Helada Andina · prueba CPU", page_icon="❄️")
-st.title("Helada Andina · prueba de despliegue (T22)")
-st.caption("Red del tamaño del starter con pesos aleatorios y entrada sintética. No es un pronóstico.")
-
-with st.spinner("Importando PyTorch y corriendo 24 horas de inferencia en CPU…"):
-    m = cargar_y_medir()
-
-rss, rss_max = memoria_mb()
-arranque = m["listo_en"] - m["proceso_inicio"] if m["proceso_inicio"] else None
+colores = {"sin riesgo": st.success, "vigilancia": st.warning, "helada probable": st.error}
+colores[r["nivel"]](f"**{r['nivel'].capitalize()}** · {mensaje(r['nivel'])}")
 
 c1, c2, c3 = st.columns(3)
-c1.metric("Arranque del proceso → modelo listo", f"{arranque:.1f} s" if arranque else "n/d")
-c2.metric("Memoria RSS actual", f"{rss:.0f} MB" if rss else "n/d")
-c3.metric("Memoria RSS máxima", f"{rss_max:.0f} MB" if rss_max else "n/d")
+c1.metric("Temperatura mínima", f"{r['tmin_c']:.1f} °C", help=f"Hacia las {r['hora_tmin']:%H:%M} (hora de Lima)")
+c2.metric("Inicio bajo 0 °C", f"{r['inicio']:%H:%M}" if r["inicio"] else "No se espera")
+c3.metric("Duración bajo 0 °C", f"{r['duracion_h']} h" if r["inicio"] else "—")
 
-st.subheader("Detalle")
-st.table({
-    "Medida": [
-        "Importar torch", "Crear la red", "Inferencia 24 h (1.ª)", "Inferencia 24 h (2.ª)",
-        "Carga total (import + red + 2 inferencias)", "Parámetros", "Tamaño de pesos (float32)",
-        "Forma de salida", "torch", "CUDA disponible", "Hilos de CPU", "Python", "Plataforma",
-    ],
-    "Valor": [
-        f"{m['t_import']:.2f} s", f"{m['t_modelo']:.3f} s", f"{m['t_inferencia']:.3f} s",
-        f"{m['t_inferencia_2']:.3f} s", f"{m['t_total_carga']:.2f} s", f"{m['params']:,}",
-        f"{m['pesos_mb']:.2f} MB", str(m["salida"]), m["torch"], str(m["cuda"]), str(m["hilos"]),
-        sys.version.split()[0], platform.platform(),
-    ],
-})
-st.caption(
-    "Las medidas de carga se toman una vez por proceso (caché). Para medir el arranque en frío, "
-    "abre la app después de que el hosting la haya dormido o tras un *Reboot app*."
-)
+if not umbral.get("validado"):
+    st.caption("Umbral: referencia general de 0 °C, no específica para la papa (sin fuente validada todavía).")
+st.caption(AVISO_LIMITES)
+
+with st.expander("Temperatura por hora (modelo, hora de Lima)"):
+    st.dataframe(pd.DataFrame({
+        "Hora": [f"{a_hora_lima(t):%d/%m %H:%M}" for t in t_noche],
+        "T (°C)": np.round(t_celda, 1),
+    }), hide_index=True)
