@@ -1,21 +1,30 @@
-# Localidades del Callejón de Huaylas (v0 · T44). T14 (@lalo-dev8) las verifica y agrega la
-# celda (fila, columna) y la elevación del DEM. Coordenadas aproximadas de la plaza principal.
-# La celda de la grilla de 3 km se calcula en la app con data/static.npz (fila 0 = sur).
+# Localidades del Callejón de Huaylas (T14 · HU-07). Coordenadas aproximadas de la plaza principal.
+# fila, columna y elevacion_dem_m son la celda de la grilla de 3 km (fila 0 = sur) y la altura del DEM.
+# Se calculan con data/static.npz:  python app/frost/zonas.py   (null = todavía sin calcular)
 
 carhuaz:
   nombre: Carhuaz
   provincia: Carhuaz
   lat: -9.282
   lon: -77.646
+  fila: null
+  columna: null
+  elevacion_dem_m: null
 
 huaraz:
   nombre: Huaraz
   provincia: Huaraz
   lat: -9.527
   lon: -77.528
+  fila: null
+  columna: null
+  elevacion_dem_m: null
 
 yungay:
   nombre: Yungay
   provincia: Yungay
   lat: -9.139
   lon: -77.744
+  fila: null
+  columna: null
+  elevacion_dem_m: null
