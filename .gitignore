@@ -14,7 +14,16 @@ __pycache__/
 .ipynb_checkpoints/
 .venv/
 venv/
+.pytest_cache/
+.ruff_cache/
+
+# Base de datos local del producto (confirmaciones)
+*.sqlite
+*.db
 
 # Claves y entorno
 .env
+.env.*
+!.env.example
 kaggle.json
+.claude/settings.local.json
