@@ -1,6 +1,6 @@
 """
-Reglas de helada (v0 · T44): zona → celda, noche objetivo, nivel de riesgo, inicio y duración.
-T15 (@lalo-dev8) las completa y agrega pruebas. Sin red ni PyTorch: solo numpy y la biblioteca estándar.
+Reglas de helada: zona → celda, noche objetivo, nivel de riesgo, inicio y duración (T15 · HU-02).
+Sin red ni PyTorch: solo numpy y la biblioteca estándar. Los umbrales se leen de thresholds.yaml.
 """
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -18,9 +18,30 @@ class ZonaFueraDeGrilla(ValueError):
     pass
 
 
+class UmbralInvalido(ValueError):
+    """thresholds.yaml no tiene el cultivo o sus valores no son coherentes."""
+
+
 def cargar_yaml(nombre):
     with open(FROST / nombre, encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def umbral_de_cultivo(cultivo="papa", umbrales=None):
+    """
+    Umbral del cultivo leído de thresholds.yaml (o de `umbrales`, el dict ya cargado).
+    Exige helada_c y vigilancia_c numéricos, con helada_c <= vigilancia_c.
+    """
+    umbrales = cargar_yaml("thresholds.yaml") if umbrales is None else umbrales
+    if cultivo not in umbrales:
+        raise UmbralInvalido(f"No hay umbrales para el cultivo '{cultivo}' en thresholds.yaml.")
+    u = umbrales[cultivo]
+    for clave in ("helada_c", "vigilancia_c"):
+        if not isinstance(u.get(clave), (int, float)) or isinstance(u.get(clave), bool):
+            raise UmbralInvalido(f"'{cultivo}.{clave}' debe ser un número en thresholds.yaml.")
+    if u["helada_c"] > u["vigilancia_c"]:
+        raise UmbralInvalido(f"'{cultivo}': helada_c no puede ser mayor que vigilancia_c.")
+    return u
 
 
 def celda_de_zona(lat, lon, wrf_lats, wrf_lons):
@@ -53,27 +74,68 @@ def a_hora_lima(t_utc):
     return datetime.strptime(str(t_utc), "%Y%m%d%H").replace(tzinfo=timezone.utc).astimezone(LIMA)
 
 
+def nivel_de_riesgo(tmin_c, umbral):
+    """sin riesgo > vigilancia_c · vigilancia en (helada_c, vigilancia_c] · helada probable <= helada_c."""
+    if tmin_c <= umbral["helada_c"]:
+        return NIVELES[2]
+    if tmin_c <= umbral["vigilancia_c"]:
+        return NIVELES[1]
+    return NIVELES[0]
+
+
+def _paso_horas(fechas):
+    """Paso típico entre horas consecutivas (1 h en el pronóstico horario, 3 h si viene cada 3 h)."""
+    if len(fechas) < 2:
+        return 1.0
+    difs = np.diff([f.timestamp() for f in fechas]) / 3600
+    return float(np.median(difs))
+
+
 def evaluar_noche(t_celsius, times, umbral):
     """
-    t_celsius : (H,) temperatura del modelo en la celda de la zona, horas de la noche en orden.
-    times     : (H,) 'YYYYMMDDHH' UTC.
-    umbral    : dict de thresholds.yaml (helada_c, vigilancia_c).
+    t_celsius : (H,) temperatura del modelo en la celda de la zona, horas de la noche.
+    times     : (H,) 'YYYYMMDDHH' UTC (se ordenan si vienen desordenadas).
+    umbral    : dict de thresholds.yaml (helada_c, vigilancia_c); ver umbral_de_cultivo().
+
+    Devuelve nivel, T mínima y su hora, inicio (primera hora con T <= helada_c, hora de Lima),
+    fin (última hora bajo el umbral), duración en horas y los tramos bajo el umbral.
+    Cada hora bajo el umbral cuenta como un paso de pronóstico (1 h si es horario).
     """
     t = np.asarray(t_celsius, dtype=float)
-    tmin = float(t.min())
-    if tmin <= umbral["helada_c"]:
-        nivel = NIVELES[2]
-    elif tmin <= umbral["vigilancia_c"]:
-        nivel = NIVELES[1]
-    else:
-        nivel = NIVELES[0]
+    tt = np.asarray(times).astype(str)
+    if t.ndim != 1 or t.size == 0:
+        raise ValueError("Se necesita al menos una hora de temperatura para evaluar la noche.")
+    if t.shape != tt.shape:
+        raise ValueError("Temperaturas y horas deben tener el mismo largo.")
+    if np.isnan(t).any():
+        raise ValueError("Hay horas sin temperatura (NaN); no se puede evaluar la noche.")
+
+    orden = np.argsort(tt, kind="stable")
+    t, tt = t[orden], tt[orden]
+    fechas = [a_hora_lima(x) for x in tt]
+    paso = _paso_horas(fechas)
 
     bajo = t <= umbral["helada_c"]
-    inicio = a_hora_lima(np.asarray(times)[bajo.argmax()]) if bajo.any() else None
+    tramos = []
+    i = 0
+    while i < len(t):
+        if bajo[i]:
+            j = i
+            while j + 1 < len(t) and bajo[j + 1]:
+                j += 1
+            tramos.append({"inicio": fechas[i], "fin": fechas[j], "horas": (j - i + 1) * paso})
+            i = j + 1
+        else:
+            i += 1
+
+    tmin = float(t.min())
+    duracion = float(sum(tr["horas"] for tr in tramos))
     return {
-        "nivel": nivel,
+        "nivel": nivel_de_riesgo(tmin, umbral),
         "tmin_c": tmin,
-        "hora_tmin": a_hora_lima(np.asarray(times)[t.argmin()]),
-        "inicio": inicio,                  # None = no se espera bajar del umbral
-        "duracion_h": int(bajo.sum()),     # horas con T <= umbral (pronóstico horario)
+        "hora_tmin": fechas[int(t.argmin())],
+        "inicio": tramos[0]["inicio"] if tramos else None,   # None = no se espera bajar del umbral
+        "fin": tramos[-1]["fin"] if tramos else None,
+        "duracion_h": int(duracion) if duracion.is_integer() else duracion,
+        "tramos": tramos,
     }
