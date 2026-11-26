@@ -23,7 +23,7 @@ Criterios de aceptación:
 ### T03 · Modelo — Guardar pesos y estadísticas en models/ con ficha
 HU: HU-09 · Responsable: @johancg04
 Criterios de aceptación:
-- [ ] `models/` tiene pesos (solo state_dict), estadísticas de normalización y `FICHA.md`.
+- [ ] `models/` tiene pesos (solo state_dict), `FICHA.md` y los números de normalización; las estadísticas completas se regeneran con un script desde la data oficial.
 - [ ] Cargarlos en un proceso nuevo reproduce el score de validación (diferencia < 1e-4).
 - [ ] Si pesan más de 100 MB, hay enlace de descarga en el README.
 
