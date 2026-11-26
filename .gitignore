@@ -3,8 +3,6 @@ data/*
 !data/README.md
 *.npz
 *.csv
-# Excepción: estadísticas de normalización del modelo (las carga app/predict.py junto a modelo.pt)
-!models/*.npz
 
 # Caché del GFS y salidas del producto
 gfs_cache.npz

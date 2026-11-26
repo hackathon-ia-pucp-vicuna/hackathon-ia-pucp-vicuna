@@ -9,35 +9,26 @@ Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS
 | Archivo | Contenido | Tamaño (bytes) | SHA-256 |
 |---|---|---|---|
 | `modelo.pt` | `state_dict` de `Net` (11 tensores float32), sin optimizador | 579,761 | `ae4b86b29909dd72abc29a52575487fdfd1de574b5fc1f7fdb1ae40b4801bc1c` |
-| `estadisticas.npz` | `mu_x` (4), `sd_x` (4), `clim` (24, 70, 35, 4), `anom_sd` (4), float32 | 941,836 | `5ba6ef49730e7923313ab857c9cfedd263aff198de7c05cd7c58cf71e8dcb0dd` |
+| `normalizacion.json` | `mu_x` (4), `sd_x` (4), `anom_sd` (4): los 12 números de normalización | menos de 1 kB | — |
+| `estadisticas.npz` (**no va al repo**; se genera) | `mu_x` (4), `sd_x` (4), `clim` (24, 70, 35, 4), `anom_sd` (4), float32 | ≈ 942,000 | — |
 
-Pesan en total unos 1.5 MB, muy por debajo de los 100 MB: no hace falta un enlace externo.
+Los pesos pesan unos 0.6 MB, muy por debajo de los 100 MB: no hace falta un enlace externo.
 
 Los tensores se guardaron desde GPU: para cargarlos en CPU se usa `map_location="cpu"` (lo hace `app/predict.py`).
 
-`app/predict.py` necesita además `data/static.npz` (relieve y grillas), que es data de la competencia y no va al repo.
+`app/predict.py` necesita además `estadisticas.npz` y `data/static.npz` (relieve y grillas). Ninguno de los dos va al repo.
 
-### Estado y licencia de `estadisticas.npz`
+### Cómo obtener `estadisticas.npz`
 
-`clim` es el promedio del WRF de entrenamiento por hora UTC y celda; las otras tres claves son medias y desviaciones. Son un **derivado de la data oficial, de licencia CC BY-NC-SA** (organización de la Hackathon IA PUCP 2026). Por eso este archivo se rige por CC BY-NC-SA (atribución, uso no comercial, misma licencia) y **queda fuera de la licencia del código**.
+Con `data/train.npz` descargado de Kaggle (ver `data/README.md`) y NumPy, desde la raíz del repo:
 
-Se publica en este repo por decisión de johancg04 (25 nov); **los organizadores aún no lo han confirmado**. Si indican que no se puede, se retira y se regenera, desde la raíz del repo y con `data/train.npz`:
-
-```python
-import sys
-import numpy as np
-sys.path.insert(0, "train")
-import validacion as v
-
-d = np.load("data/train.npz")
-X, Y, t = d["X"], d["Y"], d["times"].astype(str)
-trn, _ = v.corte_temporal(t)
-clim = v.climatologia(Y[trn], t[trn])
-np.savez("models/estadisticas.npz", mu_x=X[trn].mean((0, 1, 2)), sd_x=X[trn].std((0, 1, 2)),
-         clim=clim, anom_sd=(Y[trn] - clim[v.horas(t[trn])]).std((0, 1, 2)))
+```bash
+python train/generar_estadisticas.py
 ```
 
-El archivo regenerado tiene los mismos valores (comprobado el 25 nov, diferencia máxima 0.0); su SHA-256 puede cambiar.
+El script calcula las cuatro claves con las horas de entrenamiento y solo escribe el archivo si `mu_x`, `sd_x` y `anom_sd` coinciden con `normalizacion.json` (diferencia relativa de hasta 1e-5).
+
+`clim` es el promedio del WRF de entrenamiento por hora UTC y celda: un **derivado de la data oficial, de licencia CC BY-NC-SA**. Por eso el archivo no se publica en el repo (los organizadores no han confirmado que se pueda). Hasta el 25 nov estuvo versionado en la rama de T03, así que sigue visible en los commits del PR #11.
 
 ## Entrada y salida
 
@@ -75,13 +66,15 @@ Predicción = `clim[hora] + anomalía × anom_sd`.
 
 ## Cómo comprobar que los archivos reproducen el score
 
-Con `modelo.pt` y `estadisticas.npz` en `models/`, `train.npz` y `static.npz` en `data/`, y PyTorch instalado:
+Con `modelo.pt` en `models/`, `train.npz` y `static.npz` en `data/`, y PyTorch y pandas instalados:
 
 ```bash
 pytest -q -s tests/test_reproduce_score.py tests/test_paridad.py
 ```
 
-El primero carga los archivos con `predecir()` en CPU y exige una diferencia menor que 1e-4 en ambos scores.
+El primero genera las estadísticas en una carpeta temporal, carga los pesos con `predecir()` en CPU y exige una diferencia menor que 1e-4 en ambos scores. La paridad con pesos reales no necesita las estadísticas.
+
+Las dos comprobaciones siguientes se hicieron con el `estadisticas.npz` que escribió el entrenamiento (SHA-256 `5ba6ef49730e7923313ab857c9cfedd263aff198de7c05cd7c58cf71e8dcb0dd`), antes de que existiera el script.
 
 Última comprobación (25 nov, commit `abc555e`): script privado de Kaggle `johancg04/vicuna-t03-verificacion`, versión 1, en CPU (Python 3.13.18, NumPy 2.1.3, PyTorch 2.11.0, pandas 2.3.3), con `estadisticas.npz` tomado de la salida del entrenamiento. 9 pruebas pasaron.
 
@@ -100,6 +93,15 @@ El primero carga los archivos con `predecir()` en CPU y exige una diferencia men
 - `predecir()` para 24 horas, con los pesos reales: 0.151 s en la CPU de Kaggle.
 
 No se instaló Streamlit ni se probó el despliegue.
+
+### Con las estadísticas generadas por el script
+
+25 nov, script privado de Kaggle `johancg04/vicuna-t03-generacion`, versión 1, en CPU: commit `66c2b28` más los cambios que retiran `estadisticas.npz` del repo (aún sin commit al ejecutarse). Python 3.12.3, torch 2.5.1+cpu, NumPy 2.1.3, pandas 2.2.3.
+
+- Suite completa: 77 pruebas pasaron, ninguna omitida.
+- `train/generar_estadisticas.py` produjo las cuatro claves con diferencia máxima 0.0 frente al archivo del entrenamiento, y el mismo SHA-256.
+- `score_local` 0.33767968 (diferencia 0) y `score_oficial` 0.44092408 (-6.5e-8).
+- Sin el archivo generado, `predecir()` falla con un mensaje que indica cómo generarlo.
 
 ## Limitaciones
 
