@@ -83,6 +83,13 @@ pytest -q -s tests/test_reproduce_score.py tests/test_paridad.py
 
 El primero carga los archivos con `predecir()` en CPU y exige una diferencia menor que 1e-4 en ambos scores.
 
+Última comprobación (25 nov, commit `abc555e`): script privado de Kaggle `johancg04/vicuna-t03-verificacion`, versión 1, en CPU (Python 3.13.18, NumPy 2.1.3, PyTorch 2.11.0, pandas 2.3.3), con `estadisticas.npz` tomado de la salida del entrenamiento. 9 pruebas pasaron.
+
+| Score | En CPU, proceso nuevo | Entrenamiento | Diferencia |
+|---|---|---|---|
+| `score_local` | 0.33767968 | 0.33767968 | menor que 1e-8 |
+| `score_oficial` | 0.44092408 | 0.44092415 | -6.5e-8 |
+
 ## Limitaciones
 
 - La época se elige mirando la validación, así que los scores son algo optimistas.
