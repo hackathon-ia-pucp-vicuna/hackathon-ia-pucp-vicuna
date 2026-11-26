@@ -154,6 +154,29 @@ Criterios de aceptación:
 - [ ] El formulario de entrega y su fecha límite (hora de Lima) están anotados en `plan.md`.
 - [ ] Hay una captura de la confirmación de inscripción.
 
+### T49 · Producto — predecir() con ensamble de miembros
+HU: HU-09 · Responsable: @DuDu-0912 · Verifica: @johancg04
+Fecha: 27 nov.
+Criterios de aceptación:
+- [ ] `models/modelo.json` lista los miembros (archivo y SHA-256) y `predecir()` carga exactamente esos.
+- [ ] Si falta un miembro o no coincide su hash, hay un error claro en español.
+- [ ] La salida es la media de los miembros, cada uno con la HR recortada a 0–100 (diferencia < 1e-5), probada con 1 y 5 miembros sintéticos.
+- [ ] Con el manifiesto apuntando a la línea base, los scores de referencia no cambian (diferencia < 1e-4).
+- [ ] La app corre de punta a punta con datos reales de Open-Meteo (captura o salida en el PR).
+- [ ] pytest sin fallos con `torch==2.5.1+cpu`.
+
+### T50 · Modelo — Publicar en models/ el ensamble enviado a Kaggle
+HU: HU-09 · Responsable: @johancg04 · Verifica: @DuDu-0912
+Fecha: 28 nov. Depende de: T49.
+Criterios de aceptación:
+- [ ] Los 5 `.pt` del envío 58920867 están en `models/` y sus SHA-256 coinciden con la salida de Kaggle.
+- [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` no va al repo.
+- [ ] La paridad entre el notebook y la app pasa con los 5 pesos (diferencia < 1e-5 en 5 muestras).
+- [ ] `predecir()` sobre `test.npz` reproduce el envío 58920867 en las 646,800 filas (diferencia máxima ≤ 0.002 por variable; se reporta la medida).
+- [ ] Se anotan el tiempo de inferencia de 24 horas en CPU y el tamaño total de los pesos.
+- [ ] La ficha, el README y `experimentos.md` quedan actualizados y dicen que estos pesos no tienen validación propia.
+- [ ] pytest sin fallos; la prueba que reproduce el envío sustituye a la de la línea base.
+
 ## Sprint 2 · Producto mínimo y modelo final (29 nov–3 dic)
 
 ### T17 · Producto — Streamlit: zona, tabla por hora, GFS vs modelo
@@ -234,27 +257,30 @@ Criterios de aceptación:
 - [ ] El token se lee de los secretos de GitHub; no aparece en el repo ni en los logs del workflow.
 - [ ] Si el workflow falla, el README explica cómo correr el script a mano.
 
-### T47 · Modelo — Congelar el modelo final (corte de experimentos)
-HU: HU-09 · Responsable: @johancg04
-Criterios de aceptación:
-- [ ] El 2 dic queda decidido qué pesos se usan y se anota en `experimentos.md`.
-- [ ] Después de esa fecha no cambian los pesos salvo por un error grave, con issue y aprobación del equipo.
-- [ ] `predecir()` y la app cargan los pesos congelados y el score de validación coincide.
-
-## Sprint 3 · Entrega (meta 5 dic; límite 8 dic)
-
 ### T24 · Modelo — Entrenamiento final y pesos en models/
 HU: HU-09 · Responsable: @johancg04
+Fecha: 1 dic. Depende de: T11 y T50; usa lo que T09, T20 y T21 hayan demostrado en validación hasta esa fecha.
 Criterios de aceptación:
 - [ ] Entrenado con todos los datos oficiales y con semillas fijas.
 - [ ] Los pesos finales están en `models/` con su ficha.
 - [ ] El `submission.csv` pasa la validación de formato (ids de `sample_submission.csv`, sin NaN).
+
+### T47 · Modelo — Congelar el modelo final (corte de experimentos)
+HU: HU-09 · Responsable: @johancg04
+Fecha: 2 dic. Depende de: T24.
+Criterios de aceptación:
+- [ ] El 2 dic queda decidido qué pesos se usan y se anota en `experimentos.md`.
+- [ ] Después de esa fecha no cambian los pesos salvo por un error grave, con issue y aprobación del equipo.
+- [ ] `predecir()` y la app cargan los pesos congelados y reproducen su CSV; la validación se reporta para la misma configuración con corte temporal.
+
+## Sprint 3 · Entrega (meta 5 dic; límite 8 dic)
 
 ### T25 · Modelo — Elegir las 2 submissions finales
 HU: HU-09 · Responsable: @johancg04
 Criterios de aceptación:
 - [ ] Hay 2 submissions marcadas en Kaggle: una segura y una más arriesgada.
 - [ ] El criterio queda en `experimentos.md` y no depende solo del leaderboard público.
+- [ ] Una de las 2 finales es la que usa el producto (los mismos pesos, a través de `predecir()`).
 
 ### T26 · Producto — Pulido de interfaz, errores y caché
 HU: HU-11 · Responsable: @DuDu-0912
@@ -345,9 +371,9 @@ Criterios de aceptación:
 
 | Responsable | Tareas | N.º |
 |---|---|---|
-| @johancg04 | T01, T02, T03, T08, T09, T10, T20, T24, T25, T39, T43, T47 | 12 |
+| @johancg04 | T01, T02, T03, T08, T09, T10, T20, T24, T25, T39, T43, T47, T50 | 13 |
 | @maxrodev | T04, T06, T27, T29, T30, T31, T32, T33, T34, T40, T42, T46, T48 | 13 |
-| @DuDu-0912 | T05, T17, T18, T19, T22, T23, T26, T28, T37, T38, T41, T44 | 12 |
+| @DuDu-0912 | T05, T17, T18, T19, T22, T23, T26, T28, T37, T38, T41, T44, T49 | 13 |
 | @lalo-dev8 | T07, T11, T12, T13, T14, T15, T16, T21, T35, T36, T45 | 11 |
 
-Total: 48 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
+Total: 50 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
