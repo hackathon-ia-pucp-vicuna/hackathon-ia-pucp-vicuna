@@ -46,7 +46,7 @@ El script calcula las cuatro claves con las horas de entrenamiento y solo escrib
 3. Se añaden el DEM normalizado (1 canal) y un mapa estático aprendido (8 canales).
 4. Tres convoluciones (3×3, 3×3, 1×1) que predicen la **anomalía normalizada** respecto de la climatología de esa hora.
 
-Predicción = `clim[hora] + anomalía × anom_sd`.
+Predicción = `clim[hora] + anomalía × anom_sd`. Desde T10, `predecir()` recorta después la RH a 0–100 %.
 
 ## Entrenamiento
 
@@ -64,6 +64,19 @@ Predicción = `clim[hora] + anomalía × anom_sd`.
 | `score_local` (denominador: RMSE de la climatología) | 336 | 0.337680 | 9.921 | 0.973 | 1.719 | 1.609 |
 | `score_oficial` (constantes del leaderboard; 00, 03, …, 21 UTC) | 112 | 0.440924 | 9.905 | 0.959 | 1.682 | 1.572 |
 
+### Con el recorte de RH (T10)
+
+25 nov, script privado de Kaggle `johancg04/vicuna-t10-verificacion`, versión 1, en CPU (Python 3.13.18, NumPy 2.1.3, PyTorch 2.11.0, pandas 2.3.3): commit `fcda094` más los cambios de T10 (aún sin commit al ejecutarse). Mismos pesos y mismas estadísticas; solo cambia el recorte.
+
+| Score | Sin recorte | Con recorte | Diferencia | RMSE RH sin → con |
+|---|---|---|---|---|
+| `score_local` | 0.337680 | 0.337793 | +1.13e-4 | 9.921 → 9.914 |
+| `score_oficial` | 0.440924 | 0.440981 | +5.6e-5 | 9.905 → 9.899 |
+
+- El WRF de `train.npz` tiene la RH entre 0 y 100 %. Sin recorte, 8,038 de 823,200 valores predichos en validación pasaban de 100 (máximo 116.8) y ninguno bajaba de 0.
+- T, U y V no cambian (diferencia máxima 0.0).
+- La tabla de validación de arriba es la del entrenamiento, sin recorte.
+
 ## Cómo comprobar que los archivos reproducen el score
 
 Con `modelo.pt` en `models/`, `train.npz` y `static.npz` en `data/`, y PyTorch y pandas instalados:
@@ -72,7 +85,7 @@ Con `modelo.pt` en `models/`, `train.npz` y `static.npz` en `data/`, y PyTorch y
 pytest -q -s tests/test_reproduce_score.py tests/test_paridad.py
 ```
 
-El primero genera las estadísticas en una carpeta temporal, carga los pesos con `predecir()` en CPU y exige una diferencia menor que 1e-4 en ambos scores. La paridad con pesos reales no necesita las estadísticas.
+El primero genera las estadísticas en una carpeta temporal, carga los pesos con `predecir()` en CPU y exige una diferencia menor que 1e-4 en ambos scores respecto de los valores con recorte de RH (tabla de T10). La paridad con pesos reales no necesita las estadísticas.
 
 Las dos comprobaciones siguientes se hicieron con el `estadisticas.npz` que escribió el entrenamiento (SHA-256 `5ba6ef49730e7923313ab857c9cfedd263aff198de7c05cd7c58cf71e8dcb0dd`), antes de que existiera el script.
 

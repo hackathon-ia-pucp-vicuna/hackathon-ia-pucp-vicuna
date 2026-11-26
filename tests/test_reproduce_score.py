@@ -4,7 +4,8 @@ Los pesos de models/ reproducen el score de validación en un proceso nuevo (T03
 Genera las estadísticas con train/generar_estadisticas.py en una carpeta temporal, carga
 models/modelo.pt con app/predict.predecir() (CPU), arma las ventanas con la función `windows` del
 notebook de entrenamiento y evalúa con train/validacion.py.
-Los valores de referencia son los que imprimió el entrenamiento en Kaggle (ver models/FICHA.md).
+Los valores de referencia son los de predecir() con la HR recortada a 0–100 (T10), medidos en Kaggle;
+los del entrenamiento, sin recorte, están en models/FICHA.md.
 
 La reproducción se omite si faltan PyTorch, pandas, los pesos o la data oficial.
 
@@ -32,7 +33,7 @@ NOTEBOOK = RAIZ / "train" / "t02_linea_base.ipynb"
 FICHA = RAIZ / "models" / "FICHA.md"
 RUTA_TRAIN = RAIZ / "data" / "train.npz"
 TOLERANCIA = 1e-4
-REFERENCIA = {"score_local": 0.3376796841621399, "score_oficial": 0.44092414598231033}
+REFERENCIA = {"score_local": 0.3377929925918579, "score_oficial": 0.44098055507774636}
 
 
 def sha_en_ficha(nombre):

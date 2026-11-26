@@ -107,6 +107,7 @@ def predecir(Xw, horas_utc, lote=64):
                 (RH %, T K, U m/s, V m/s); fila 0 = norte.
     horas_utc : (N,) hora UTC (0–23) de cada ventana.
     Devuelve  : (N, 70, 35, 4) en unidades físicas; fila 0 = sur (como Y en Kaggle).
+                La HR se recorta a 0–100 %; T, U y V salen sin cambios.
     """
     torch, modelo, s = _cargar()
     Xw = np.asarray(Xw, dtype=np.float32)
@@ -124,7 +125,9 @@ def predecir(Xw, horas_utc, lote=64):
             salida.append(s["clim"][h] + anom * s["anom_sd"])
     if not salida:
         return np.empty((0, 70, 35, 4), np.float32)
-    return np.concatenate(salida)
+    Y = np.concatenate(salida)
+    Y[..., 0] = np.clip(Y[..., 0], 0, 100)   # HR en %
+    return Y
 
 
 def medir_24h(repeticiones=3):
