@@ -156,24 +156,27 @@ Criterios de aceptación:
 
 ### T49 · Producto — predecir() con ensamble de miembros
 HU: HU-09 · Responsable: @DuDu-0912 · Verifica: @johancg04
-Fecha: 27 nov.
+Fecha: 27 nov. Depende de: T09 y T20 (su notebook en `develop`).
 Criterios de aceptación:
 - [ ] `models/modelo.json` lista los miembros (archivo y SHA-256) y `predecir()` carga exactamente esos.
 - [ ] Si falta un miembro o no coincide su hash, hay un error claro en español.
 - [ ] `models/modelo.json` indica la referencia de normalización de sus miembros, y `predecir()` da un error claro en español si `estadisticas.npz` no coincide con ella (tolerancia relativa 1e-5).
+- [ ] `models/modelo.json` declara la variante de red de sus miembros y `predecir()` construye esa: la del starter, o el residuo sobre el GFS crudo con decodificador profundo (T09/T20), que no exige `clim_gfs`.
+- [ ] La paridad entre la app y el notebook de cada variante pasa con los mismos pesos, sintéticos o reales (diferencia < 1e-5 en 5 muestras).
 - [ ] La salida es la media de los miembros, cada uno con la HR recortada a 0–100 (diferencia < 1e-5), probada con 1 y 5 miembros sintéticos.
 - [ ] Con el manifiesto apuntando a la línea base, los scores de referencia no cambian (diferencia < 1e-4).
 - [ ] La app corre de punta a punta con datos reales de Open-Meteo (captura o salida en el PR).
 - [ ] pytest sin fallos con `torch==2.5.1+cpu`.
 
-### T50 · Modelo — Publicar en models/ el ensamble enviado a Kaggle
+### T50 · Modelo — Publicar en models/ el ensamble del envío del producto
 HU: HU-09 · Responsable: @johancg04 · Verifica: @DuDu-0912
 Fecha: 28 nov. Depende de: T49.
 Criterios de aceptación:
-- [ ] Los 5 `.pt` del envío 58920867 están en `models/` y sus SHA-256 coinciden con la salida de Kaggle.
-- [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` no va al repo.
-- [ ] La paridad entre el notebook y la app pasa con los 5 pesos (diferencia < 1e-5 en 5 muestras).
-- [ ] `predecir()` sobre `test.npz` reproduce el envío 58920867 en las 646,800 filas (diferencia máxima ≤ 0.002 por variable; se reporta la medida).
+- [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (al 26 nov, el candidato es 58926424); es una media simple de miembros de una variante que `predecir()` soporta.
+- [ ] Todos los `.pt` de ese envío están en `models/` y sus SHA-256 coinciden con la salida de Kaggle del notebook que lo generó.
+- [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` y `clim_gfs` no van al repo.
+- [ ] La paridad entre el notebook que generó el envío y la app pasa con todos sus pesos (diferencia < 1e-5 en 5 muestras).
+- [ ] `predecir()` sobre `test.npz` reproduce ese envío en las 646,800 filas (diferencia máxima ≤ 0.002 por variable; se reporta la medida).
 - [ ] Se anotan el tiempo de inferencia de 24 horas en CPU y el tamaño total de los pesos.
 - [ ] La ficha, el README y `experimentos.md` quedan actualizados y dicen que estos pesos no tienen validación propia.
 - [ ] pytest sin fallos; la prueba que reproduce el envío sustituye a la de la línea base.
