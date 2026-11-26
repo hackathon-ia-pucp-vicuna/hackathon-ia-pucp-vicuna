@@ -21,7 +21,7 @@ Los tensores se guardaron desde GPU: para cargarlos en CPU se usa `map_location=
 
 `clim` es el promedio del WRF de entrenamiento por hora UTC y celda; las otras tres claves son medias y desviaciones. Son un **derivado de la data oficial, de licencia CC BY-NC-SA** (organización de la Hackathon IA PUCP 2026). Por eso este archivo se rige por CC BY-NC-SA (atribución, uso no comercial, misma licencia) y **queda fuera de la licencia del código**.
 
-**Todavía no está en el repo:** falta que el equipo confirme que puede publicarse. Mientras tanto se obtiene de la salida del notebook de entrenamiento o se regenera, desde la raíz del repo y con `data/train.npz`:
+Se publica en este repo por decisión de johancg04 (25 nov); **los organizadores aún no lo han confirmado**. Si indican que no se puede, se retira y se regenera, desde la raíz del repo y con `data/train.npz`:
 
 ```python
 import sys
