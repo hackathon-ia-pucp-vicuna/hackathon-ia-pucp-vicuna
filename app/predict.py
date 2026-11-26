@@ -4,9 +4,10 @@
 Usa la MISMA red y los MISMOS pesos que la submission de Kaggle (copia de `Net` del starter).
 `tests/test_paridad.py` comprueba que esta copia da la misma salida que la red del notebook (T12).
 
-Archivos que necesita (ninguno se genera aquí):
+Archivos que necesita (ninguno se genera desde aquí):
   models/modelo.pt          state_dict de la red (T03)
-  models/estadisticas.npz   mu_x, sd_x, clim (24,70,35,4), anom_sd del entrenamiento (T03)
+  models/estadisticas.npz   mu_x, sd_x, clim (24,70,35,4), anom_sd del entrenamiento; no va al repo,
+                            se genera con `python train/generar_estadisticas.py` (T03)
   data/static.npz           DEM y grillas de la competencia (se baja de Kaggle; no va al repo)
 
 Medir el tiempo en CPU para 24 horas (con los archivos reales):
@@ -27,9 +28,9 @@ class ModeloNoDisponible(RuntimeError):
     """Falta un archivo del modelo; el mensaje está en español para mostrarlo al usuario."""
 
 
-def _exigir(ruta, que):
+def _exigir(ruta, que, como=""):
     if not Path(ruta).exists():
-        raise ModeloNoDisponible(f"No se encontró {que} ({Path(ruta).name}).")
+        raise ModeloNoDisponible(f"No se encontró {que} ({Path(ruta).name}). {como}".strip())
 
 
 @lru_cache(maxsize=1)
@@ -90,7 +91,8 @@ def _cargar():
     import torch
 
     _exigir(RUTA_PESOS, "los pesos del modelo")
-    _exigir(RUTA_ESTADISTICAS, "las estadísticas de normalización")
+    _exigir(RUTA_ESTADISTICAS, "las estadísticas de normalización",
+            "Genéralas con: python train/generar_estadisticas.py")
     est = np.load(RUTA_ESTADISTICAS)
     modelo = construir_red(cargar_static())
     modelo.load_state_dict(torch.load(RUTA_PESOS, map_location="cpu", weights_only=True))
@@ -105,6 +107,7 @@ def predecir(Xw, horas_utc, lote=64):
                 (RH %, T K, U m/s, V m/s); fila 0 = norte.
     horas_utc : (N,) hora UTC (0–23) de cada ventana.
     Devuelve  : (N, 70, 35, 4) en unidades físicas; fila 0 = sur (como Y en Kaggle).
+                La HR se recorta a 0–100 %; T, U y V salen sin cambios.
     """
     torch, modelo, s = _cargar()
     Xw = np.asarray(Xw, dtype=np.float32)
@@ -122,7 +125,9 @@ def predecir(Xw, horas_utc, lote=64):
             salida.append(s["clim"][h] + anom * s["anom_sd"])
     if not salida:
         return np.empty((0, 70, 35, 4), np.float32)
-    return np.concatenate(salida)
+    Y = np.concatenate(salida)
+    Y[..., 0] = np.clip(Y[..., 0], 0, 100)   # HR en %
+    return Y
 
 
 def medir_24h(repeticiones=3):

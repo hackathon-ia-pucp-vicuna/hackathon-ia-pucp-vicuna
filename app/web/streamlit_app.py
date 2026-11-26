@@ -20,8 +20,9 @@ APP = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(APP))
 
 from frost.advice import AVISO_LIMITES, mensaje  # noqa: E402
-from frost.rules import (ZonaFueraDeGrilla, a_hora_lima, cargar_yaml, celda_de_zona,  # noqa: E402
-                         evaluar_noche, horas_de_la_noche, noche_objetivo, umbral_de_cultivo)
+from frost.rules import (UmbralInvalido, ZonaFueraDeGrilla, a_hora_lima, cargar_yaml,  # noqa: E402
+                         celda_de_zona, evaluar_noche, horas_de_la_noche, noche_objetivo,
+                         umbral_de_cultivo)
 from gfs_forecast import get_gfs_forecast, make_windows  # noqa: E402
 from predict import ModeloNoDisponible, cargar_static, predecir  # noqa: E402
 
@@ -51,12 +52,11 @@ st.title("Helada Andina")
 st.caption("Aviso de helada para la papa en el Callejón de Huaylas · versión 0")
 
 zonas = cargar_yaml("zones.yaml")
-umbral = umbral_de_cultivo("papa")   # 0 °C mientras la fuente no esté validada (T07)
-bajo = f"bajo {umbral['helada_c']:g} °C"
 clave = st.selectbox("Localidad", list(zonas), format_func=lambda k: zonas[k]["nombre"])
 zona = zonas[clave]
 
 try:
+    umbral = umbral_de_cultivo("papa")   # 0 °C mientras la fuente no esté validada (T07)
     static = cargar_static()
     fila, col = celda_de_zona(zona["lat"], zona["lon"], static["wrf_lats"], static["wrf_lons"])
 
@@ -81,7 +81,7 @@ try:
 except ModeloNoDisponible as e:
     st.error(f"El modelo no está disponible. {e}")
     st.stop()
-except ZonaFueraDeGrilla as e:
+except (ZonaFueraDeGrilla, UmbralInvalido) as e:
     st.error(str(e))
     st.stop()
 except Exception:
@@ -92,8 +92,9 @@ inicio_noche = a_hora_lima(f"{noche}00")
 st.subheader(f"Noche del {inicio_noche:%d/%m} al {inicio_noche + pd.Timedelta(days=1):%d/%m} · {zona['nombre']}")
 
 colores = {"sin riesgo": st.success, "vigilancia": st.warning, "helada probable": st.error}
-colores[r["nivel"]](f"**{r['nivel'].capitalize()}** · {mensaje(r['nivel'])}")
+colores[r["nivel"]](f"**{r['nivel'].capitalize()}** · {mensaje(r['nivel'], r, zona['nombre'])}")
 
+bajo = f"bajo {umbral['helada_c']:g} °C"
 c1, c2, c3 = st.columns(3)
 c1.metric("Temperatura mínima", f"{r['tmin_c']:.1f} °C", help=f"Hacia las {r['hora_tmin']:%H:%M} (hora de Lima)")
 c2.metric(f"Inicio {bajo}", f"{r['inicio']:%H:%M}" if r["inicio"] else "No se espera")
