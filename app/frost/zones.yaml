@@ -3,7 +3,7 @@
 # Se calculan con data/static.npz:  python app/frost/zonas.py
 # Ojo: elevacion_dem_m es el promedio de la celda de 3 km (fondo de valle + laderas), por eso supera
 # en 140–490 m la altura de la plaza (Huaraz ~3,050 m, Carhuaz ~2,650 m, Yungay ~2,460 m).
-# Cada localidad queda a menos de 1.5 km del centro de su celda.
+# Cada localidad queda a menos de 2 km del centro de su celda (máximo posible: 2.1 km, media diagonal).
 
 carhuaz:
   nombre: Carhuaz
