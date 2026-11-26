@@ -60,3 +60,20 @@ Prueba con `app/web/streamlit_app.py`: red del tamaño del starter (`Net`, pesos
 Lectura: con F5 Streamlit reutiliza el proceso y la caché (`st.cache_resource`), así que los tiempos no se vuelven a medir y la recarga es casi inmediata. De los 10.4 s de arranque, ~2.6 s son PyTorch y el modelo; el resto es el arranque de Python y Streamlit. Un arranque tras dormir la app (o *Reboot app*) incluye además reconstruir el contenedor, que no mide la app.
 
 **Decisión:** usamos **Streamlit Community Cloud** para el producto. PyTorch CPU se instala y corre sin problemas; el pico de memoria (358 MB) deja margen amplio para el modelo final, `predecir()` y la caché del GFS; la inferencia de 24 horas tarda ~0.1 s. Riesgo: la app se duerme si no tiene visitas y el primer acceso tarda más; antes del video y de la evaluación hay que abrirla para despertarla. Plan B: Hugging Face Spaces (CPU gratis) y, en todo caso, README para correr en local.
+
+## Inscripción y entrega (T46 · HU-10)
+**Equipo:** Vicuña (con "ñ"), idéntico en Luma y en Kaggle. Los 4 integrantes figuran en ambos (verificado el 26/11/2026): @johancg04, @lalo-dev8, @DuDu-0912 y @maxrodev. Una cuenta de Kaggle por persona.
+
+**Formulario de entregables:** los organizadores **aún no lo publican** (al 26/11/2026 el equipo no lo ha recibido). Según el anuncio oficial de fechas, cierra junto con Kaggle. Cuando llegue (correo o grupo oficial de WhatsApp), se anota aquí su enlace o dónde encontrarlo. Seguimiento: @maxrodev (T32).
+- Se entregan los 4 entregables: submissions en Kaggle, repositorio público, producto (link o README para correr en local) y video pitch.
+- **Cierre: martes 8 dic, 23:59 (hora de Lima, UTC−5)**, a la misma hora que Kaggle. Sin extensiones.
+- Meta interna: sábado 5 dic. El 4 dic se graba el video, se prueba en máquina limpia y se hace la última submission; el 6 y 7 dic son solo para errores graves (T34).
+- El envío y la captura de la confirmación son parte de T32.
+
+**Fechas oficiales (hora de Lima)**
+| Hito | Fecha |
+|---|---|
+| Cierre de inscripciones | lun 7 dic, 23:59 |
+| Cierre de Kaggle y del formulario de entregables | mar 8 dic, 23:59 |
+| Anuncio de finalistas (por correo) | jue 10 dic |
+| Gran final presencial (PUCP) | sáb 12 dic, 2:00–5:00 p. m. |
