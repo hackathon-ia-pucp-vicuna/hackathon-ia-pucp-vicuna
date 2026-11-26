@@ -26,7 +26,6 @@ Meta: entrar al top 5 del público, que pide unos +0.004 de validación sobre la
 | Experimento | Responsable | Cuenta de Kaggle | Estado | Versión | Resultado |
 |---|---|---|---|---|---|
 | F1 horas futuras (t+1, t+2) | Edu | eduquispeperez | descartado por regla | exp-f1 v1 (QUICK en CPU); v2 y v3 cancelados sin correr | sin métrica; no se usa |
-| Horas futuras del GFS, solo y mezclado con la base | Johan | johancg04 | descartado | su kernel | no pasó la regla; además no se usa por la regla de entrada t-2, t-1, t |
 | V1 variables derivadas del viento | Edu | eduquispeperez | descartado | exp-v1 v2 | A −0.0021, B −0.0038 frente a r2 |
 | Ensamble de 10+10 modelos | Johan | johancg04 | corriendo | su kernel | pendiente |
 | Q1 regularización: dropout 0.2 y 0.3, ruido gaussiano sigma 0.05 y 0.1 | Edu | eduquispeperez | en Kaggle | exp-q1 v2 | pendiente |
