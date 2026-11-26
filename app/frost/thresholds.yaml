@@ -1,11 +1,20 @@
-# Umbrales de helada por cultivo (v0 · T44). Los define y valida T07/T16 (@lalo-dev8).
-# Sin fuente verificada solo se usa la referencia general de 0 °C, rotulada como tal (spec 001).
-# Niveles provisionales hasta aprobar la spec (PR #2, pregunta 1), sobre la T mínima nocturna:
-#   sin riesgo > vigilancia_c · vigilancia entre helada_c y vigilancia_c · helada probable <= helada_c
+# Umbrales de helada por cultivo (T07 · HU-01), sobre la T mínima nocturna del aire:
+#   sin riesgo > vigilancia_c · vigilancia en (helada, vigilancia_c] · helada probable <= helada
+#
+# helada_cultivo_c solo se aplica si validado: true (otra persona abrió la fuente y confirmó la cita).
+# Mientras validado sea false, la app usa referencia_general_c (0 °C) y lo rotula como referencia general.
+# Para validar: abrir fuente.enlace, buscar el cuadro 4.5 y comprobar que dice lo de fuente.cita.
 
 papa:
   nombre: Papa
-  helada_c: 0.0          # referencia general, no específica del cultivo
-  vigilancia_c: 2.0      # provisional
-  fuente: null
+  referencia_general_c: 0.0     # helada meteorológica: aire a 0 °C o menos
+  helada_cultivo_c: -1.0        # inicio del rango de daño en floración y fructificación (-1 a -2 °C)
+  vigilancia_c: 2.0             # margen por el error del pronóstico (1–2 °C); criterio del equipo, no de la fuente
+  fuente:
+    documento: "Frost Protection: fundamentals, practice and economics, Volume 1 (FAO Environment and Natural Resources Series 10), cap. 4, cuadro 4.5"
+    institucion: "FAO (Organización de las Naciones Unidas para la Alimentación y la Agricultura); autores R. L. Snyder y J. P. de Melo-Abreu"
+    anio: 2005
+    enlace: "https://www.fao.org/4/y7223e/y7223e0a.htm"
+    cita: "Cuadro 4.5 (según Ventskevich, 1958), temperaturas críticas de daño (°C) para la papa: germinación -2, -3; floración -1, -2; fructificación -1, -2."
+    nota: "La fuente no aclara si es temperatura del aire o del tejido; en noches despejadas la planta se enfría más que el aire, por eso se toma el extremo más cálido (-1 °C)."
   validado: false
