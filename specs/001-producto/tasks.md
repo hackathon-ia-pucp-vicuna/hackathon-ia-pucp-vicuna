@@ -174,7 +174,7 @@ Fecha: 28 nov. Depende de: T49.
 Criterios de aceptación:
 - [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (al 26 nov, el candidato es 58926424); es una media simple de miembros de una variante que `predecir()` soporta.
 - [ ] Todos los `.pt` de ese envío están en `models/` y sus SHA-256 coinciden con la salida de Kaggle del notebook que lo generó.
-- [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` y `clim_gfs` no van al repo.
+- [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` y `clim_gfs` no van al repo, y `generar_estadisticas.py` no calcula `clim_gfs` porque ninguna variante soportada la usa.
 - [ ] La paridad entre el notebook que generó el envío y la app pasa con todos sus pesos (diferencia < 1e-5 en 5 muestras).
 - [ ] `predecir()` sobre `test.npz` reproduce ese envío en las 646,800 filas (diferencia máxima ≤ 0.002 por variable; se reporta la medida).
 - [ ] Se anotan el tiempo de inferencia de 24 horas en CPU y el tamaño total de los pesos.
@@ -266,6 +266,7 @@ HU: HU-09 · Responsable: @johancg04
 Fecha: 1 dic. Depende de: T11 y T50; usa lo que T09, T20 y T21 hayan demostrado en validación hasta esa fecha.
 Criterios de aceptación:
 - [ ] Entrenado con todos los datos oficiales y con semillas fijas.
+- [ ] Entrena solo con las ventanas completas (`train/ventanas.py`, T11).
 - [ ] Los pesos finales están en `models/` con su ficha.
 - [ ] El `submission.csv` pasa la validación de formato (ids de `sample_submission.csv`, sin NaN).
 - [ ] Si cambia la red, `predecir()` y `tests/test_paridad.py` se actualizan en el mismo PR.
