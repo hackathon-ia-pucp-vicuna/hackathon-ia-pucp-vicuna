@@ -84,7 +84,9 @@ def test_la_salida_es_la_media_de_los_miembros_con_hr_recortada(tmp_path, monkey
     Y = predict.predecir(Xw, h)
     assert maximo_crudo > 100                        # sin recorte alguna celda pasaría de 100 %
     assert Y[..., 0].max() <= 100 and Y[..., 0].min() >= 0
-    assert np.abs(Y - esperado).max() < TOLERANCIA * 300   # 1e-5 relativo a T ≈ 300 K
+    dif = np.abs(Y - esperado).max()
+    print(f"\nT49 · media de {n} miembro(s), {variante}: diferencia máxima {dif:.2e}")
+    assert dif < TOLERANCIA
 
 
 def test_carga_exactamente_los_miembros_del_manifiesto(tmp_path, monkeypatch):
