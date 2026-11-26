@@ -4,6 +4,7 @@
  "notebook": "train/t09b_capacidad.ipynb",
  "kernel_kaggle": "johancg04/vicuna-t09b-capacidad v2",
  "variante": "residuo_crudo_profundo",
+ "estadisticas": "estadisticas_ensamble.npz",
  "configuraciones": {
   "r1": {
    "w": 64,
