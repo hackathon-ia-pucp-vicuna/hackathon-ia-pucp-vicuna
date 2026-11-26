@@ -160,6 +160,7 @@ Fecha: 27 nov.
 Criterios de aceptación:
 - [ ] `models/modelo.json` lista los miembros (archivo y SHA-256) y `predecir()` carga exactamente esos.
 - [ ] Si falta un miembro o no coincide su hash, hay un error claro en español.
+- [ ] `models/modelo.json` indica la referencia de normalización de sus miembros, y `predecir()` da un error claro en español si `estadisticas.npz` no coincide con ella (tolerancia relativa 1e-5).
 - [ ] La salida es la media de los miembros, cada uno con la HR recortada a 0–100 (diferencia < 1e-5), probada con 1 y 5 miembros sintéticos.
 - [ ] Con el manifiesto apuntando a la línea base, los scores de referencia no cambian (diferencia < 1e-4).
 - [ ] La app corre de punta a punta con datos reales de Open-Meteo (captura o salida en el PR).
@@ -264,6 +265,7 @@ Criterios de aceptación:
 - [ ] Entrenado con todos los datos oficiales y con semillas fijas.
 - [ ] Los pesos finales están en `models/` con su ficha.
 - [ ] El `submission.csv` pasa la validación de formato (ids de `sample_submission.csv`, sin NaN).
+- [ ] Si cambia la red, `predecir()` y `tests/test_paridad.py` se actualizan en el mismo PR.
 
 ### T47 · Modelo — Congelar el modelo final (corte de experimentos)
 HU: HU-09 · Responsable: @johancg04
