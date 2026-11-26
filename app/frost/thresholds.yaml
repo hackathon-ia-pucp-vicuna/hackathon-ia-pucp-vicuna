@@ -17,4 +17,5 @@ papa:
     enlace: "https://www.fao.org/4/y7223e/y7223e0a.htm"
     cita: "Cuadro 4.5 (según Ventskevich, 1958), temperaturas críticas de daño (°C) para la papa: germinación -2, -3; floración -1, -2; fructificación -1, -2."
     nota: "La fuente no aclara si es temperatura del aire o del tejido; en noches despejadas la planta se enfría más que el aire, por eso se toma el extremo más cálido (-1 °C)."
-  validado: false
+  validado: true
+  validado_por: "@lalo-dev8, 2026-11-26 (abrió el enlace y confirmó la fila Potato del cuadro 4.5)"
