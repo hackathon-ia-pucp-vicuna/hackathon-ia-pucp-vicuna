@@ -27,17 +27,39 @@ def cargar_yaml(nombre):
         return yaml.safe_load(f)
 
 
+CAMPOS_FUENTE = ("documento", "institucion", "anio", "enlace")
+
+
+def _es_numero(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
 def umbral_de_cultivo(cultivo="papa", umbrales=None):
     """
     Umbral del cultivo leído de thresholds.yaml (o de `umbrales`, el dict ya cargado).
+
+    Con validado: true y una fuente completa se usa helada_cultivo_c; si no, la referencia
+    general (referencia_general_c, 0 °C) y `es_referencia_general` queda en True para rotularlo.
+    Devuelve el dict del YAML más helada_c (el umbral que se aplica) y es_referencia_general.
     Exige helada_c y vigilancia_c numéricos, con helada_c <= vigilancia_c.
     """
     umbrales = cargar_yaml("thresholds.yaml") if umbrales is None else umbrales
     if cultivo not in umbrales:
         raise UmbralInvalido(f"No hay umbrales para el cultivo '{cultivo}' en thresholds.yaml.")
-    u = umbrales[cultivo]
+    u = dict(umbrales[cultivo])
+    if "helada_c" not in u:                          # formato con fuente: elegir según validación
+        if u.get("validado") is True:
+            fuente = u.get("fuente") or {}
+            faltan = [c for c in CAMPOS_FUENTE if not fuente.get(c)]
+            if faltan:
+                raise UmbralInvalido(f"'{cultivo}' está validado pero a su fuente le falta: {', '.join(faltan)}.")
+            u["helada_c"], u["es_referencia_general"] = u.get("helada_cultivo_c"), False
+        else:
+            u["helada_c"], u["es_referencia_general"] = u.get("referencia_general_c", 0.0), True
+    else:
+        u.setdefault("es_referencia_general", not u.get("validado", False))
     for clave in ("helada_c", "vigilancia_c"):
-        if not isinstance(u.get(clave), (int, float)) or isinstance(u.get(clave), bool):
+        if not _es_numero(u.get(clave)):
             raise UmbralInvalido(f"'{cultivo}.{clave}' debe ser un número en thresholds.yaml.")
     if u["helada_c"] > u["vigilancia_c"]:
         raise UmbralInvalido(f"'{cultivo}': helada_c no puede ser mayor que vigilancia_c.")
