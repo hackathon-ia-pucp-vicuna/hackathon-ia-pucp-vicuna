@@ -90,6 +90,17 @@ El primero carga los archivos con `predecir()` en CPU y exige una diferencia men
 | `score_local` | 0.33767968 | 0.33767968 | menor que 1e-8 |
 | `score_oficial` | 0.44092408 | 0.44092415 | -6.5e-8 |
 
+### Con las versiones del producto (`torch==2.5.1+cpu`)
+
+25 nov, commit `7e704f1`: script privado de Kaggle `johancg04/vicuna-t03-torch251`, versión 1, en CPU. Entorno de Python 3.12.3 creado con `uv` (el Python de Kaggle es 3.13), con torch 2.5.1+cpu, NumPy 2.1.3 y pandas 2.2.3, las versiones de `requirements-app.txt`, y pytest 9.2.0.
+
+- 9 pruebas pasaron, incluida la paridad con los pesos reales.
+- `score_local` 0.33767968 (diferencia con el entrenamiento menor que 1e-8) y `score_oficial` 0.44092408 (-6.5e-8).
+- En las 336 horas de validación, la diferencia máxima frente a las predicciones con torch 2.11.0 fue 0.0 en las cuatro variables.
+- `predecir()` para 24 horas, con los pesos reales: 0.151 s en la CPU de Kaggle.
+
+No se instaló Streamlit ni se probó el despliegue.
+
 ## Limitaciones
 
 - La época se elige mirando la validación, así que los scores son algo optimistas.
