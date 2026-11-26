@@ -1,30 +1,31 @@
 # Localidades del Callejón de Huaylas (T14 · HU-07). Coordenadas aproximadas de la plaza principal.
 # fila, columna y elevacion_dem_m son la celda de la grilla de 3 km (fila 0 = sur) y la altura del DEM.
-# Se calculan con data/static.npz:  python app/frost/zonas.py   (null = todavía sin calcular)
+# Se calculan con data/static.npz:  python app/frost/zonas.py
+# Ojo: elevacion_dem_m es el promedio de la celda de 3 km (fondo de valle + laderas), por eso supera
+# en 140–490 m la altura de la plaza (Huaraz ~3,050 m, Carhuaz ~2,650 m, Yungay ~2,460 m).
+# Cada localidad queda a menos de 2 km del centro de su celda (máximo posible: 2.1 km, media diagonal).
 
 carhuaz:
   nombre: Carhuaz
   provincia: Carhuaz
   lat: -9.282
   lon: -77.646
-  fila: null
-  columna: null
-  elevacion_dem_m: null
-
+  fila: 36
+  columna: 14
+  elevacion_dem_m: 2871
 huaraz:
   nombre: Huaraz
   provincia: Huaraz
   lat: -9.527
   lon: -77.528
-  fila: null
-  columna: null
-  elevacion_dem_m: null
-
+  fila: 27
+  columna: 18
+  elevacion_dem_m: 3187
 yungay:
   nombre: Yungay
   provincia: Yungay
   lat: -9.139
   lon: -77.744
-  fila: null
-  columna: null
-  elevacion_dem_m: null
+  fila: 42
+  columna: 11
+  elevacion_dem_m: 2952

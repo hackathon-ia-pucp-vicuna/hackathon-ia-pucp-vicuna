@@ -92,3 +92,7 @@ def test_zones_yaml_coincide_con_el_static_real():
             "zones.yaml desactualizado: ejecuta python app/frost/zonas.py"
         assert ZONAS[clave]["elevacion_dem_m"] == z["elevacion_dem_m"]
         assert 1500 < z["elevacion_dem_m"] < 4500    # los pueblos del Callejón están entre ~2,200 y ~3,100 m
+    # Con los límites reales de la grilla: Chimbote (costa) y Huánuco quedan fuera
+    for lat, lon in [(-9.07, -78.59), (-9.93, -76.24)]:
+        with pytest.raises(ZonaFueraDeGrilla, match="fuera del área"):
+            celda_y_elevacion(lat, lon, st)
