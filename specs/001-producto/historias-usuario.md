@@ -70,6 +70,6 @@ Formato de criterios: Dado / Cuando / Entonces, o una condición verificable (n�
 | HU-06 | T19 |
 | HU-07 | T14, T17 |
 | HU-08 | T03, T06, T27, T29, T30, T40 |
-| HU-09 | T01–T03, T08–T11, T20, T21, T24, T25, T39, T45, T47 |
+| HU-09 | T01–T03, T08–T11, T20, T21, T24, T25, T39, T45, T47, T49, T50 |
 | HU-10 | T27, T31, T32, T33, T34, T41, T42, T43, T46 |
 | HU-11 | T22, T26, T37 |
