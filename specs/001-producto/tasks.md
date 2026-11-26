@@ -76,7 +76,7 @@ Criterios de aceptación:
 - [ ] HR queda recortada a 0–100 y hay una prueba que lo verifica.
 
 ### T11 · Datos — Revisar ventanas con huecos de horas
-HU: HU-09 · Responsable: @lalo-dev8
+HU: HU-09 · Responsable: @johancg04
 Criterios de aceptación:
 - [ ] Ninguna ventana (t-2, t-1, t) cruza un hueco de horas.
 - [ ] Hay una prueba con huecos sintéticos.
@@ -377,9 +377,9 @@ Criterios de aceptación:
 
 | Responsable | Tareas | N.º |
 |---|---|---|
-| @johancg04 | T01, T02, T03, T08, T09, T10, T20, T24, T25, T39, T43, T47, T50 | 13 |
+| @johancg04 | T01, T02, T03, T08, T09, T10, T11, T20, T24, T25, T39, T43, T47, T50 | 14 |
 | @maxrodev | T04, T06, T27, T29, T30, T31, T32, T33, T34, T40, T42, T46, T48 | 13 |
 | @DuDu-0912 | T05, T17, T18, T19, T22, T23, T26, T28, T37, T38, T41, T44, T49 | 13 |
-| @lalo-dev8 | T07, T11, T12, T13, T14, T15, T16, T21, T35, T36, T45 | 11 |
+| @lalo-dev8 | T07, T12, T13, T14, T15, T16, T21, T35, T36, T45 | 10 |
 
 Total: 50 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
