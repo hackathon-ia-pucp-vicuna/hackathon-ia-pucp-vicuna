@@ -1,6 +1,28 @@
-# Ficha del modelo — línea base (T03)
+# Ficha del modelo
 
 Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS (~27 km) a lo que daría WRF (3 km) en la Cordillera Blanca.
+
+## Ensamble del envío 58945688 (T50, modelo del producto)
+
+**Envío del producto:** ref. 58945688, público **0.49702** (26 nov). Es la media simple de 10 miembros, cada uno con la HR recortada a 0–100 %. Hasta T49, `app/predict.py` sigue cargando la línea base de abajo.
+
+| Archivo | Contenido |
+|---|---|
+| `modelo.json` | Manifiesto: envío, variante de red, configuraciones, normalización (12 números) y los 10 miembros con su SHA-256 |
+| `ensamble/r1_s0.pt` … `r1_s4.pt` | Configuración r1 (ronda 1: residuo sobre el GFS crudo + decodificador profundo), semillas 0–4 |
+| `ensamble/r2_s0.pt` … `r2_s4.pt` | Configuración r2: igual + dropout 0.1 (no actúa al predecir: misma red) |
+| `estadisticas_ensamble.npz` (**no va al repo**) | `mu_x`, `sd_x`, `clim`, `anom_sd` con **todas** las horas de `train.npz`: `python train/generar_estadisticas.py --ensamble` |
+
+- **Tamaño:** 1,617,306 bytes por miembro (402,452 parámetros, `state_dict` float32), **16.2 MB** los 10.
+- **Origen:** `train/t09b_capacidad.ipynb`, Kaggle `johancg04/vicuna-t09b-capacidad` v2 (Tesla T4, Python 3.13.16, NumPy 2.1.3, torch 2.11.0). Los SHA-256 coinciden con la salida descargada de Kaggle (26 nov).
+- **Sin validación propia:** los 10 se reentrenaron con todos los datos (18 feb – 30 jun). La validación de esa configuración, con corte temporal (A, 16–30 jun), es **0.48626** (RMSE RH 9.190, T 0.836, U 1.555, V 1.475); ver `docs/modelo/experimentos.md`.
+- **Reproducción en CPU** (Docker `python:3.12-slim`, torch 2.5.1+cpu): la inferencia del propio notebook con los 10 pesos y las estadísticas generadas por el script reproduce `submission_mezcla.csv` en las **646,800 filas**, con una diferencia máxima de 0.00054 (RH), 0.00061 (T), 0.00051 (U) y 0.00051 (V). El CSV va redondeado a 3 decimales. `tests/test_ensamble.py` repite la comparación con una muestra fija de 2,400 filas (24 horas).
+- **Tiempo de 24 horas en CPU** (Intel i9-9880H, Docker, torch 2.5.1+cpu, mediana de 7): 4 hilos: 1 modelo 0.20 s, 5 modelos 1.12 s, **10 modelos 2.60 s**. Limitado a 2 CPU y 2 hilos: 0.34 s, 1.86 s y **4.19 s**.
+- **Entrada y salida:** igual que la línea base, pero la red suma su corrección al GFS de la hora t interpolado a 3 km: `pred = clim[h] + (red(x, h) + (GFS_interp − clim[h]) / anom_sd) × anom_sd`.
+
+---
+
+# Línea base (T03)
 
 **Estos pesos no se han enviado a Kaggle.** El score público 0.42782 es de otra corrida del mismo starter (CPU, 24 nov), cuyos pesos no son estos.
 
