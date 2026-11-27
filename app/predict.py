@@ -14,7 +14,8 @@ comprueba que dan la misma salida que la red del notebook):
                            No usa `clim_gfs`.
 
 Archivos que necesita (ninguno se genera desde aquí):
-  models/modelo.json        manifiesto (T49)
+  models/modelo.json        manifiesto (T49). Las rutas van relativas a models/; la normalización de
+                            referencia trae mu_x, sd_x, anom_sd y, opcional, clim_media (media de clim por variable)
   models/<miembros>.pt      state_dict de cada miembro (T03, T50)
   models/<estadisticas>.npz mu_x, sd_x, clim (24,70,35,4), anom_sd; no va al repo, se genera con
                             `python train/generar_estadisticas.py` (línea base) o con `--ensamble` (T50)
@@ -54,8 +55,12 @@ def _exigir(ruta, que, como=""):
 
 
 def _ruta_en_models(nombre):
-    """Ruta de un archivo del manifiesto: relativa a models/ (una ruta absoluta se respeta)."""
-    return RUTA_MODELOS / nombre
+    """Ruta de un archivo del manifiesto, siempre dentro de models/: no se aceptan rutas absolutas ni con '..'."""
+    rel = Path(nombre)
+    if rel.is_absolute() or rel.drive or ".." in rel.parts:
+        raise ModeloNoDisponible(f"El manifiesto del modelo nombra un archivo fuera de models/: {nombre}. "
+                                 "Usa una ruta relativa a models/.")
+    return RUTA_MODELOS / rel
 
 
 @lru_cache(maxsize=1)
@@ -129,6 +134,9 @@ def construir_red_residuo(st, cfg):
     import torch.nn.functional as F
 
     soportada = {"skip": False, "terreno": False, "enc_prof": False, "profundo": True, "lags": 3, "residuo": "crudo"}
+    faltan = [k for k in (*soportada, "w", "bloques") if k not in cfg]
+    if faltan:
+        raise ModeloNoDisponible(f"A la configuración del manifiesto le faltan campos: {', '.join(faltan)}.")
     distintas = {k: cfg.get(k) for k, v in soportada.items() if cfg.get(k) != v}
     if distintas:
         raise ModeloNoDisponible(f"La configuración del manifiesto no es la variante residuo_crudo_profundo: {distintas}.")
@@ -189,6 +197,8 @@ def leer_manifiesto(ruta=None):
         raise ModeloNoDisponible(f"El manifiesto {ruta.name} no lista ningún miembro.")
     norm = m.get("normalizacion", {})
     faltan = [k for k in ("mu_x", "sd_x", "anom_sd") if len(norm.get(k, [])) != 4]
+    if "clim_media" in norm and len(norm["clim_media"]) != 4:
+        faltan.append("clim_media")
     if faltan:
         raise ModeloNoDisponible(f"El manifiesto {ruta.name} no trae la normalización de referencia: {', '.join(faltan)}.")
     for x in m["miembros"]:
@@ -211,10 +221,20 @@ def _comprobar_miembro(x):
     return ruta
 
 
+def media_clim(clim):
+    """Media de la climatología por variable (4 números): huella de `clim` que guarda el manifiesto."""
+    return np.asarray(clim, np.float64).reshape(-1, 4).mean(0)
+
+
 def _comprobar_normalizacion(est, m):
-    for k in ("mu_x", "sd_x", "anom_sd"):
-        ref = np.asarray(m["normalizacion"][k], np.float64)
-        if not np.allclose(est[k], ref, rtol=TOLERANCIA_NORMALIZACION, atol=0):
+    """mu_x, sd_x y anom_sd contra el manifiesto; `clim` por su media por variable si el manifiesto la trae."""
+    norm = m["normalizacion"]
+    valores = {k: est[k] for k in ("mu_x", "sd_x", "anom_sd")}
+    if "clim_media" in norm:
+        valores["clim_media"] = media_clim(est["clim"])
+    for k, v in valores.items():
+        ref = np.asarray(norm[k], np.float64)
+        if not np.allclose(v, ref, rtol=TOLERANCIA_NORMALIZACION, atol=0):
             raise ModeloNoDisponible(
                 f"Las estadísticas ({m['_estadisticas'].name}) no coinciden con la normalización del manifiesto en "
                 f"{k} (tolerancia relativa {TOLERANCIA_NORMALIZACION:g}). Genéralas de nuevo con: {COMO_GENERAR[m['variante']]}")
@@ -228,6 +248,10 @@ def _cargar():
     rutas = [_comprobar_miembro(x) for x in m["miembros"]]
     _exigir(m["_estadisticas"], "las estadísticas de normalización", f"Genéralas con: {COMO_GENERAR[m['variante']]}")
     est = np.load(m["_estadisticas"])
+    faltan = [k for k in ("mu_x", "sd_x", "clim", "anom_sd") if k not in est.files]
+    if faltan:
+        raise ModeloNoDisponible(f"A las estadísticas ({m['_estadisticas'].name}) les faltan: {', '.join(faltan)}. "
+                                 f"Genéralas de nuevo con: {COMO_GENERAR[m['variante']]}")
     stats = {k: est[k].astype(np.float32) for k in ("mu_x", "sd_x", "clim", "anom_sd")}
     _comprobar_normalizacion(stats, m)
     st = cargar_static()

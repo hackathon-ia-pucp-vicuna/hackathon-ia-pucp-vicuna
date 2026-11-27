@@ -162,12 +162,15 @@ def test_paridad_residuo_con_todos_los_pesos_reales():
 
 
 def escribir_manifiesto(carpeta, variante, archivos, est, cfg=None):
-    """Manifiesto con rutas absolutas (se respetan sobre models/) y la normalización de `est`."""
+    """Manifiesto en `carpeta`, que hace de models/ (las rutas van relativas a ella), con la normalización
+    de `est` y la huella de su `clim`. Quien lo usa apunta predict.RUTA_MODELOS a `carpeta`."""
     import hashlib
 
-    m = {"variante": variante, "estadisticas": str(carpeta / "estadisticas.npz"),
-         "normalizacion": {k: np.asarray(est[k]).tolist() for k in ("mu_x", "sd_x", "anom_sd")},
-         "miembros": [{"archivo": str(a), "sha256": hashlib.sha256(Path(a).read_bytes()).hexdigest(),
+    norm = {k: np.asarray(est[k]).tolist() for k in ("mu_x", "sd_x", "anom_sd")}
+    norm["clim_media"] = predict.media_clim(est["clim"]).tolist()
+    m = {"variante": variante, "estadisticas": "estadisticas.npz", "normalizacion": norm,
+         "miembros": [{"archivo": Path(a).relative_to(carpeta).as_posix(),
+                       "sha256": hashlib.sha256(Path(a).read_bytes()).hexdigest(),
                        "configuracion": "c"} for a in archivos]}
     if cfg is not None:
         m["configuraciones"] = {"c": cfg}
@@ -199,6 +202,7 @@ def preparar_modelo(tmp_path, monkeypatch, variante="starter", n=1):
     np.savez(tmp_path / "estadisticas.npz", **est)
     ruta = escribir_manifiesto(tmp_path, variante, archivos, est, None if variante == "starter" else CFG_RESIDUO)
     monkeypatch.setattr(predict, "RUTA_STATIC", tmp_path / "static.npz")
+    monkeypatch.setattr(predict, "RUTA_MODELOS", tmp_path)
     monkeypatch.setattr(predict, "RUTA_MANIFIESTO", ruta)
     predict.cargar_static.cache_clear()
     predict._cargar.cache_clear()

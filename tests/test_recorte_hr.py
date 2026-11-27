@@ -56,6 +56,7 @@ def modelo_nulo(tmp_path, monkeypatch):
     # T49: predecir() carga lo que dice el manifiesto (variante starter, un miembro)
     ruta = escribir_manifiesto(tmp_path, "starter", [tmp_path / "modelo.pt"], est)
     monkeypatch.setattr(predict, "RUTA_STATIC", tmp_path / "static.npz")
+    monkeypatch.setattr(predict, "RUTA_MODELOS", tmp_path)
     monkeypatch.setattr(predict, "RUTA_MANIFIESTO", ruta)
     predict.cargar_static.cache_clear()
     predict._cargar.cache_clear()

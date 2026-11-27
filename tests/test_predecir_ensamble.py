@@ -11,6 +11,7 @@ predecir() con ensamble de miembros declarado en models/modelo.json (T49 · HU-0
 Se ejecuta con:  pytest -q -s tests/test_predecir_ensamble.py
 """
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -134,6 +135,40 @@ def test_variante_desconocida_da_error_claro(tmp_path, monkeypatch):
         predict.predecir(entrada_tipica(1), [0])
 
 
+@pytest.mark.parametrize("nombre", ["/tmp/m0.pt", "../m0.pt", "ensamble/../../m0.pt"])
+def test_rutas_fuera_de_models_dan_error_claro(tmp_path, monkeypatch, nombre):
+    preparar_modelo(tmp_path, monkeypatch, "starter", 1)
+    m = json.loads(predict.RUTA_MANIFIESTO.read_text(encoding="utf-8"))
+    m["miembros"][0]["archivo"] = nombre
+    predict.RUTA_MANIFIESTO.write_text(json.dumps(m), encoding="utf-8")
+    with pytest.raises(predict.ModeloNoDisponible, match="fuera de models/"):
+        predict.predecir(entrada_tipica(1), [0])
+
+
+def test_clim_distinta_da_error_claro(tmp_path, monkeypatch):
+    _, _, est = preparar_modelo(tmp_path, monkeypatch, "residuo_crudo_profundo", 1)
+    est["clim"][..., 1] += 0.5                       # misma mu_x, sd_x y anom_sd, otra climatología de T
+    np.savez(tmp_path / "estadisticas.npz", **est)
+    with pytest.raises(predict.ModeloNoDisponible, match="en clim_media"):
+        predict.predecir(entrada_tipica(1), [0])
+
+
+def test_estadisticas_incompletas_dan_error_claro(tmp_path, monkeypatch):
+    _, _, est = preparar_modelo(tmp_path, monkeypatch, "starter", 1)
+    np.savez(tmp_path / "estadisticas.npz", **{k: v for k, v in est.items() if k != "clim"})
+    with pytest.raises(predict.ModeloNoDisponible, match="les faltan: clim"):
+        predict.predecir(entrada_tipica(1), [0])
+
+
+def test_configuracion_incompleta_da_error_claro(tmp_path, monkeypatch):
+    preparar_modelo(tmp_path, monkeypatch, "residuo_crudo_profundo", 1)
+    m = json.loads(predict.RUTA_MANIFIESTO.read_text(encoding="utf-8"))
+    del m["configuraciones"]["c"]["bloques"]
+    predict.RUTA_MANIFIESTO.write_text(json.dumps(m), encoding="utf-8")
+    with pytest.raises(predict.ModeloNoDisponible, match="le faltan campos: bloques"):
+        predict.predecir(entrada_tipica(1), [0])
+
+
 def faltan_archivos():
     faltan = [n for n in ("train.npz", "test.npz", "static.npz") if not (DATA / n).exists()]
     if not predict.RUTA_MANIFIESTO.exists():
@@ -148,10 +183,13 @@ def test_predecir_reproduce_la_muestra_del_envio(tmp_path, monkeypatch):
 
     m = predict.leer_manifiesto()
     assert m["envio_kaggle"] == 58945688
-    salida = generador.generar_ensamble(ruta_salida=tmp_path / "estadisticas_ensamble.npz")
-    manifiesto = dict(json.loads(predict.RUTA_MANIFIESTO.read_text(encoding="utf-8")), estadisticas=str(salida))
-    manifiesto["miembros"] = [dict(x, archivo=str(RAIZ / "models" / x["archivo"])) for x in manifiesto["miembros"]]
-    (tmp_path / "modelo.json").write_text(json.dumps(manifiesto), encoding="utf-8")
+    # La carpeta temporal hace de models/: el manifiesto real sin cambios, copia de los 10 pesos y
+    # estadísticas generadas con --ensamble (su clim también se comprueba, con clim_media)
+    assert len(m["normalizacion"].get("clim_media", [])) == 4
+    shutil.copytree(RAIZ / "models" / "ensamble", tmp_path / "ensamble")
+    shutil.copy(predict.RUTA_MANIFIESTO, tmp_path / "modelo.json")
+    generador.generar_ensamble(ruta_salida=tmp_path / m["estadisticas"])
+    monkeypatch.setattr(predict, "RUTA_MODELOS", tmp_path)
     monkeypatch.setattr(predict, "RUTA_MANIFIESTO", tmp_path / "modelo.json")
 
     filas = json.loads(MUESTRA.read_text(encoding="utf-8"))["filas"]
