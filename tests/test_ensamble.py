@@ -6,8 +6,8 @@ Pesos del ensamble del envío 58945688 en models/ (T50 · HU-09).
 - Con la data oficial: la inferencia del propio notebook de entrenamiento (train/t09b_capacidad.ipynb),
   con los 10 pesos en CPU, reproduce una muestra fija de 2,400 filas del CSV enviado (24 horas de test).
 
-Falta (T49): que app/predict.predecir() cargue este manifiesto; entonces se compara además la app con el
-notebook y se reproducen las 646,800 filas.
+La app (app/predict.predecir()) se prueba aparte: paridad en tests/test_paridad.py y la misma muestra en
+tests/test_predecir_ensamble.py (T49).
 
 Se ejecuta con:  pytest -q -s tests/test_ensamble.py
 """
