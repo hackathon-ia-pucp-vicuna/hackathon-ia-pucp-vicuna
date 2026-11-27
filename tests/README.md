@@ -10,4 +10,5 @@ pytest -q
 - `test_streamlit_app.py` (T17): la app de Streamlit de punta a punta con AppTest, sin red (pronóstico, relieve y modelo sintéticos): zona y cultivo, nivel, inicio y duración, tabla por hora con GFS crudo y modelo, caché y errores en español sin trazas. Con la data oficial y los pesos mide la carga con caché (< 5 s).
 - `test_confirmaciones.py` (T19): confirmaciones sí/no en SQLite: el formulario guarda zona, fecha y respuesta, una segunda respuesta reemplaza a la anterior sin duplicar y no se guardan datos personales.
 - `test_telegram.py` (T18): aviso por Telegram sin red: 600 caracteres como máximo, sin duplicados por zona y noche, token desde variables de entorno, modo de prueba sin envío y errores sin el token.
+- `test_fallos_red.py` (T37): si falla Open-Meteo se usa el último pronóstico guardado con su hora y una advertencia (app y aviso); si falla Telegram, el script no se cae, registra el error sin el token y la app sigue.
 - En CI (T40), cada PR corre `pytest` y `ruff`.
