@@ -22,7 +22,7 @@ Open-Meteo (GFS) → app/gfs_forecast.py (caché) → ventanas → app/predict.p
 1. **GFS de Open-Meteo vs. GFS del concurso:** pueden diferir; comparar distribuciones antes de confiar (T13).
 2. **Inferencia fuera de Kaggle:** la Mac del equipo no instala PyTorch (Python 3.14, Intel). Probar el despliegue Linux CPU (T22).
 3. **Umbrales sin fuente:** no inventarlos; documentar la fuente o rotular como referencia (T07).
-4. **Cupo de envíos a Kaggle:** 5 por día; enviar solo lo que mejore la validación.
+4. **Cupo de envíos a Kaggle:** 10 por día según Kaggle (tope interno: 2 por día); enviar solo lo que mejore la validación.
 5. **Cambio de estación:** entrenamiento febrero–junio, test julio–agosto (más seco y frío).
 
 ## Hitos
