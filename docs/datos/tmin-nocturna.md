@@ -9,7 +9,7 @@
 - **Noche:** 19:00–07:00 en Lima, que corresponde a 00–12 UTC. Para cada noche y celda se toma la T mínima de dos formas: con las 13 horas, y con solo las horas 00, 03, 06, 09 y 12 UTC, que son las que evalúa Kaggle y las que usa el aviso.
 - **Fuentes:** la referencia es el WRF (Y). El modelo se corre con `predecir()` sobre ventanas t-2, t-1, t (`train/ventanas.py`). El GFS interpolado es una interpolación bilineal de la grilla 17×13 a la de 3 km con las coordenadas reales, sin corregir por altura.
 - **Ámbitos:** toda la grilla (2,450 celdas), las celdas a 4,000 m o menos según el DEM (1,447 celdas, tope aproximado de la papa) y las 3 localidades de `app/frost/zones.yaml`.
-- **Para reproducir:** `python scripts/evaluar_tmin_nocturna.py` (necesita `data/` y `models/estadisticas.npz`).
+- **Para reproducir:** `python scripts/evaluar_tmin_nocturna.py` en el commit `6823f` (antes de T49), con `data/` y `models/estadisticas.npz`. Desde T49, `predecir()` carga el ensamble final, entrenado también con estas noches, y el script deja de ser una validación (ver la última sección).
 
 ## Resultados (T mínima con las 13 horas, 14 noches)
 
@@ -40,3 +40,8 @@ Con solo las horas 00, 03, 06, 09 y 12 UTC, los números casi no cambian. El mod
 - **Lo que no mejora:** el modelo es un poco cálido (+0.3 °C) y suaviza los extremos, así que **subestima las heladas**. En la zona de cultivo detectó menos de la mitad de las pocas celdas con helada.
 - **Para el producto (sugerencia para `app/frost/rules.py`, T15):** usar un margen de seguridad sobre el umbral, por ejemplo avisar "riesgo" desde +1 °C, y declarar la incertidumbre de unos ±1 °C en el mensaje.
 - **Límites:** 14 noches de junio, una sola temporada, pocas heladas en la zona de cultivo (33 casos) y la referencia es el WRF, no estaciones de SENAMHI. Hay que repetir el cálculo con los pesos finales del envío (T50).
+
+## ¿Y con el modelo final del producto (T50)?
+No se puede repetir esta evaluación con los 10 pesos del envío 58945688: se reentrenaron con **todos** los datos de `train.npz`, incluidas estas 14 noches. Medirlos aquí sería evaluarlos con noches que ya vieron, y el resultado saldría mejor de lo real.
+
+Lo que sí se sabe: la misma configuración, entrenada solo hasta el 15 jun, tiene un RMSE de T horaria de **0.836 °C** en esta validación, frente a **0.959 °C** de la línea base (horas que evalúa Kaggle; `docs/modelo/experimentos.md`). El modelo final debería estimar la T mínima nocturna igual o mejor que la línea base, pero esta evaluación no lo mide directamente. Las cifras de arriba son una estimación conservadora.
