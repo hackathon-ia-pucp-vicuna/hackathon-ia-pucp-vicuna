@@ -1,6 +1,6 @@
 {
  "descripcion": "Ensamble del envío submission_mezcla15_lead.zip (26 nov 2026, público 0.49888): media simple de 15 miembros (r1, r2 y lead, 5 semillas cada uno), cada uno con la HR recortada a 0–100. Pesos entrenados con todos los datos de train.npz: no tienen validación propia; la mezcla valida 0.48809 (A) y 0.48979 (B).",
- "envio_kaggle": null,
+ "envio_kaggle": 58975363,
  "notebook": [
   "train/t09b_capacidad.ipynb (r1, r2)",
   "train/t09d_lead.ipynb (lead)"
@@ -194,7 +194,7 @@
   "archivo": "submission_mezcla15_lead.zip",
   "publico": 0.49888,
   "fecha": "2026-11-26",
-  "nota": "La web de Kaggle no muestra el número de referencia; anotarlo con `kaggle competitions submissions`.",
+  "nota": "Referencia tomada de `kaggle competitions submissions`.",
   "anterior": 58945688
  }
 }

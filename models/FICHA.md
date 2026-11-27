@@ -6,7 +6,7 @@ Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS
 
 `models/modelo.json` lista **15 miembros**: los 10 del envío 58945688 (r1 y r2, abajo) y 5 de la configuración `lead` (`ensamble/lead_s0.pt` … `lead_s4.pt`): r2 más la hora desde el inicio del WRF como entrada (h/23), de `train/t09d_lead.ipynb`, Kaggle `johancg04/vicuna-t09d-lead` v1. El WRF de la competencia se reinicia cada día a las 00 UTC desde el GFS (ver `docs/modelo/experimentos.md`).
 
-- **Envío:** `submission_mezcla15_lead.zip`, 26 nov, público **0.49888**. La web de Kaggle no muestra su número de referencia: anotarlo con `kaggle competitions submissions`.
+- **Envío:** `submission_mezcla15_lead.zip`, 26 nov, público **0.49888**. Referencia de Kaggle: **58975363**.
 - **Validación de la mezcla de 15** (corte temporal, 5 semillas por configuración): A **0.48809**, B **0.48979** (mezcla de 10: 0.48627 y 0.48673). Los pesos publicados se reentrenaron con todos los datos: no tienen validación propia.
 - **Normalización:** la misma de los 10 (todas las horas); `estadisticas_ensamble.npz` no cambia.
 - **Tamaño:** 10 × 1,617,306 + 5 × 1,621,425 bytes = **24.3 MB** (los de `lead` tienen 1,621,425 bytes: un canal más de entrada).
