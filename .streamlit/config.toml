@@ -1,0 +1,3 @@
+# Configuración de Streamlit (T17): no mostrar trazas técnicas al usuario si algo falla.
+[client]
+showErrorDetails = false
