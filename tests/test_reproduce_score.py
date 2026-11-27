@@ -2,7 +2,8 @@
 Los pesos de models/ reproducen el score de validación en un proceso nuevo (T03 · HU-09).
 
 Genera las estadísticas con train/generar_estadisticas.py en una carpeta temporal, carga
-models/modelo.pt con app/predict.predecir() (CPU), arma las ventanas con la función `windows` del
+models/modelo.pt con app/predict.predecir() (CPU) a través de un manifiesto que apunta a la línea base
+(T49: con ese manifiesto los scores de referencia no cambian), arma las ventanas con la función `windows` del
 notebook de entrenamiento y evalúa con train/validacion.py.
 Los valores de referencia son los de predecir() con la HR recortada a 0–100 (T10), medidos en Kaggle;
 los del entrenamiento, sin recorte, están en models/FICHA.md.
@@ -15,6 +16,7 @@ import ast
 import hashlib
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -97,8 +99,17 @@ def test_los_archivos_reproducen_el_score(tmp_path, monkeypatch):
     faltan = [r.name for r in (predict.RUTA_PESOS, predict.RUTA_STATIC, RUTA_TRAIN) if not r.exists()]
     if faltan:
         pytest.skip(f"faltan {', '.join(faltan)}")
-    monkeypatch.setattr(predict, "RUTA_ESTADISTICAS",
-                        generador.generar(ruta_salida=tmp_path / "estadisticas.npz"))
+    # T49: predecir() carga lo que dice el manifiesto; aquí uno que apunta a la línea base (variante starter).
+    # La carpeta temporal hace de models/: copia de modelo.pt y estadísticas generadas en ella.
+    shutil.copy(predict.RUTA_PESOS, tmp_path / "modelo.pt")
+    generador.generar(ruta_salida=tmp_path / "estadisticas.npz")
+    manifiesto = {"variante": "starter", "estadisticas": "estadisticas.npz",
+                  "normalizacion": json.loads(generador.RUTA_NORMALIZACION.read_text(encoding="utf-8")),
+                  "miembros": [{"archivo": "modelo.pt",
+                                "sha256": hashlib.sha256(predict.RUTA_PESOS.read_bytes()).hexdigest()}]}
+    (tmp_path / "modelo.json").write_text(json.dumps(manifiesto), encoding="utf-8")
+    monkeypatch.setattr(predict, "RUTA_MODELOS", tmp_path)
+    monkeypatch.setattr(predict, "RUTA_MANIFIESTO", tmp_path / "modelo.json")
     predict._cargar.cache_clear()
 
     datos = np.load(RUTA_TRAIN)
