@@ -126,7 +126,8 @@ def construir_red(st):
 def construir_red_residuo(st, cfg):
     """
     Red de T09/T20 (`Net` de train/t09b_capacidad.ipynb con profundo=True, sin skip, terreno ni
-    codificador profundo) con la grilla y el DEM de `st`. Pesos sin cargar. Mismas claves de
+    codificador profundo) con la grilla y el DEM de `st`. Con cfg["lead"] = "lineal", la de
+    train/t09d_lead.ipynb: un canal más de entrada con la hora desde el inicio del WRF (h/23). Pesos sin cargar. Mismas claves de
     state_dict que la red del notebook. El dropout no actúa al predecir.
     """
     import torch
@@ -140,6 +141,10 @@ def construir_red_residuo(st, cfg):
     distintas = {k: cfg.get(k) for k, v in soportada.items() if cfg.get(k) != v}
     if distintas:
         raise ModeloNoDisponible(f"La configuración del manifiesto no es la variante residuo_crudo_profundo: {distintas}.")
+    lead = cfg.get("lead", "ciclica")           # T20: hora desde el inicio del WRF (train/t09d_lead.ipynb)
+    if lead not in ("ciclica", "lineal"):
+        raise ModeloNoDisponible(f"La configuración del manifiesto no es la variante residuo_crudo_profundo: lead={lead!r}.")
+    nh = 2 if lead == "ciclica" else 3
     w, bloques, p = int(cfg["w"]), [int(d) for d in cfg["bloques"]], float(cfg.get("dropout", 0.0))
     grid, dem_n = _grilla_y_dem(st)
 
@@ -158,7 +163,7 @@ def construir_red_residuo(st, cfg):
 
         def __init__(self):
             super().__init__()
-            self.enc = nn.Sequential(nn.Conv2d(4 * 3 + 2, w, 3, padding=1), nn.GELU(),
+            self.enc = nn.Sequential(nn.Conv2d(4 * 3 + nh, w, 3, padding=1), nn.GELU(),
                                      nn.Conv2d(w, w, 3, padding=1), nn.GELU())
             self.static = nn.Parameter(torch.zeros(1, 8, 70, 35))
             self.dec = nn.Sequential(nn.Conv2d(w + 9, w, 3, padding=1), nn.GELU(),
@@ -174,7 +179,10 @@ def construir_red_residuo(st, cfg):
             B = x.shape[0]
             x = x.permute(0, 1, 4, 2, 3).reshape(B, -1, 17, 13)
             ang = 2 * np.pi * h / 24
-            hh = torch.stack([torch.sin(ang), torch.cos(ang)], 1)[..., None, None].expand(B, 2, 17, 13)
+            hh = torch.stack([torch.sin(ang), torch.cos(ang)], 1)
+            if lead == "lineal":                     # el WRF se reinicia a las 00 UTC: h/23 separa 23 de 00
+                hh = torch.cat([hh, (h / 23 * 2 - 1)[:, None]], 1)
+            hh = hh[..., None, None].expand(B, nh, 17, 13)
             f = self.interpolar(self.enc(torch.cat([x, hh], 1)))
             f = torch.cat([f, self.dem.expand(B, -1, -1, -1), self.static.expand(B, -1, -1, -1)], 1)
             return self.dec(f).permute(0, 2, 3, 1)  # (B,70,35,4) anomalía normalizada (sin el término base)

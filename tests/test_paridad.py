@@ -3,7 +3,7 @@ Paridad entre la red de cada notebook de entrenamiento y su copia en app/predict
 
 Variantes:
 - starter (línea base): `Net` de train/starter_notebook.ipynb contra predict.construir_red().
-- residuo_crudo_profundo (T09/T20): `Net` de train/t09b_capacidad.ipynb contra predict.construir_red_residuo().
+- residuo_crudo_profundo (T09/T20): `Net` de train/t09d_lead.ipynb (la de t09b más la opción lead) contra predict.construir_red_residuo(), con lead cíclica y lineal.
 
 Para cada variante:
 - Sintética (siempre): misma grilla, DEM y pesos aleatorios en las dos redes; 5 muestras, diferencia < 1e-5.
@@ -30,7 +30,7 @@ sys.path.insert(0, str(RAIZ / "app"))
 import predict  # noqa: E402
 
 NOTEBOOK = RAIZ / "train" / "starter_notebook.ipynb"
-NOTEBOOK_RESIDUO = RAIZ / "train" / "t09b_capacidad.ipynb"
+NOTEBOOK_RESIDUO = RAIZ / "train" / "t09d_lead.ipynb"   # misma red que t09b, más la opción lead
 TOLERANCIA = 1e-5
 CLAVES_NET = ("skip", "terreno", "profundo", "w", "bloques", "enc_prof", "dropout", "lags")
 CFG_RESIDUO = {"w": 64, "bloques": [1, 2, 4, 1], "enc_prof": False, "dropout": 0.1, "wd": 0.0001, "lags": 3,
@@ -70,7 +70,7 @@ def red_del_notebook(st):
 
 
 def celda_red_residuo(st):
-    """Ejecuta tal cual la celda de la red de t09b_capacidad (grilla, DEM, interpolar, Bloque y Net) con `st`."""
+    """Ejecuta tal cual la celda de la red de t09d_lead (grilla, DEM, interpolar, Bloque y Net) con `st`."""
     celdas = ["".join(c["source"]) for c in json.loads(NOTEBOOK_RESIDUO.read_text(encoding="utf-8"))["cells"]
               if c["cell_type"] == "code"]
     ns = {"np": np, "torch": torch, "nn": nn, "F": F, "st": st, "dem": st["dem"],
@@ -80,7 +80,7 @@ def celda_red_residuo(st):
 
 
 def red_residuo_del_notebook(st, cfg):
-    return celda_red_residuo(st)["Net"](**{k: cfg[k] for k in CLAVES_NET})
+    return celda_red_residuo(st)["Net"](**{k: cfg[k] for k in CLAVES_NET}, lead=cfg.get("lead", "ciclica"))
 
 
 def muestras(n=5, semilla=1):
@@ -130,6 +130,19 @@ def test_paridad_sintetica_residuo():
     dif, forma = comparar_redes(red_residuo_del_notebook(st, CFG_RESIDUO), predict.construir_red_residuo(st, CFG_RESIDUO))
     assert forma == (5, 70, 35, 4)
     assert dif < TOLERANCIA, f"diferencia máxima {dif:.2e}"
+
+
+def test_paridad_sintetica_residuo_con_lead_lineal():
+    st = static_sintetico()
+    cfg = {**CFG_RESIDUO, "lead": "lineal"}
+    dif, forma = comparar_redes(red_residuo_del_notebook(st, cfg), predict.construir_red_residuo(st, cfg))
+    assert forma == (5, 70, 35, 4)
+    assert dif < TOLERANCIA, f"diferencia máxima {dif:.2e}"
+
+
+def test_lead_desconocido_da_error_claro():
+    with pytest.raises(predict.ModeloNoDisponible, match="lead"):
+        predict.construir_red_residuo(static_sintetico(), {**CFG_RESIDUO, "lead": "onehot"})
 
 
 def test_interpolacion_de_la_app_igual_a_la_del_notebook():

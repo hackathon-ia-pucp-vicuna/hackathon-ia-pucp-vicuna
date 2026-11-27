@@ -1,10 +1,10 @@
 """
-Pesos del ensamble del envío 58945688 en models/ (T50 · HU-09).
+Pesos del ensamble del producto en models/ (T50 · HU-09): mezcla de 15, envío del 26 nov (público 0.49888).
 
-- El manifiesto models/modelo.json lista 10 miembros y sus SHA-256 coinciden con los archivos.
+- El manifiesto models/modelo.json lista 15 miembros y sus SHA-256 coinciden con los archivos.
 - `generar_estadisticas.py --ensamble` usa todas las horas y se compara con la normalización del manifiesto.
-- Con la data oficial: la inferencia del propio notebook de entrenamiento (train/t09b_capacidad.ipynb),
-  con los 10 pesos en CPU, reproduce una muestra fija de 2,400 filas del CSV enviado (24 horas de test).
+- Con la data oficial: la inferencia del propio notebook de entrenamiento (train/t09d_lead.ipynb, que
+  también construye r1 y r2), con los 15 pesos en CPU, reproduce una muestra fija de 2,400 filas del CSV enviado (24 horas de test).
 
 Falta (T49): que app/predict.predecir() cargue este manifiesto; entonces se compara además la app con el
 notebook y se reproducen las 646,800 filas.
@@ -27,8 +27,8 @@ import generar_estadisticas as generador  # noqa: E402
 import validacion  # noqa: E402
 
 MANIFIESTO = RAIZ / "models" / "modelo.json"
-NOTEBOOK = RAIZ / "train" / "t09b_capacidad.ipynb"
-MUESTRA = RAIZ / "tests" / "fixtures" / "envio_58945688_muestra.json"
+NOTEBOOK = RAIZ / "train" / "t09d_lead.ipynb"
+MUESTRA = RAIZ / "tests" / "fixtures" / "envio_mezcla15_muestra.json"
 DATA = RAIZ / "data"
 TOLERANCIA_ENVIO = 0.002            # criterio de T50, por variable
 
@@ -37,19 +37,21 @@ def manifiesto():
     return json.loads(MANIFIESTO.read_text(encoding="utf-8"))
 
 
-def test_el_manifiesto_lista_diez_miembros_con_su_sha():
+def test_el_manifiesto_lista_quince_miembros_con_su_sha():
     m = manifiesto()
-    assert m["envio_kaggle"] == 58945688
+    assert m["envio"]["publico"] == 0.49888
     assert m["variante"] == "residuo_crudo_profundo"
-    assert len(m["miembros"]) == 10
-    assert len({x["archivo"] for x in m["miembros"]}) == 10
+    assert len(m["miembros"]) == 15
+    assert len({x["archivo"] for x in m["miembros"]}) == 15
     for x in m["miembros"]:
         ruta = RAIZ / "models" / x["archivo"]
         assert hashlib.sha256(ruta.read_bytes()).hexdigest() == x["sha256"], x["archivo"]
         assert x["configuracion"] in m["configuraciones"]
     # r1 y r2 solo difieren en el dropout, que no actúa al predecir: misma red
-    c1, c2 = (dict(m["configuraciones"][k]) for k in ("r1", "r2"))
+    c1, c2, c3 = (dict(m["configuraciones"][k]) for k in ("r1", "r2", "lead"))
     assert {k for k in c1 if c1[k] != c2[k]} == {"dropout"}
+    # lead = r2 + la hora desde el inicio del WRF (un canal más de entrada)
+    assert {k for k in c3 if c2.get(k) != c3[k]} == {"lead"} and c3["lead"] == "lineal"
 
 
 def test_la_normalizacion_del_manifiesto_tiene_doce_numeros():
@@ -95,7 +97,7 @@ def test_con_la_data_real_la_normalizacion_coincide(tmp_path):
 
 
 def inferencia_del_notebook():
-    """Celdas de la red y de la inferencia de train/t09b_capacidad.ipynb, ejecutadas tal cual en CPU."""
+    """Celdas de la red y de la inferencia de train/t09d_lead.ipynb, ejecutadas tal cual en CPU."""
     torch = pytest.importorskip("torch")
     pd = pytest.importorskip("pandas")
     import torch.nn as nn
@@ -116,7 +118,7 @@ def inferencia_del_notebook():
 
 
 @pytest.mark.skipif(bool(faltan_archivos()), reason="sin la data oficial (no va al repo)")
-def test_los_diez_pesos_reproducen_la_muestra_del_envio(tmp_path):
+def test_los_quince_pesos_reproducen_la_muestra_del_envio(tmp_path):
     torch, ns = inferencia_del_notebook()
     m = manifiesto()
     est = np.load(generador.generar_ensamble(ruta_salida=tmp_path / "e.npz"))
@@ -137,7 +139,8 @@ def test_los_diez_pesos_reproducen_la_muestra_del_envio(tmp_path):
     claves = ("skip", "terreno", "profundo", "w", "bloques", "enc_prof", "dropout", "lags")
     suma = 0
     for x in m["miembros"]:
-        red = ns["Net"](**{k: m["configuraciones"][x["configuracion"]][k] for k in claves})
+        cfg = m["configuraciones"][x["configuracion"]]
+        red = ns["Net"](**{k: cfg[k] for k in claves}, lead=cfg.get("lead", "ciclica"))
         red.load_state_dict(torch.load(RAIZ / "models" / x["archivo"], map_location="cpu", weights_only=True))
         suma = suma + ns["predecir_lote"](red, D, W[sel], tte[sel])
     P = suma / len(m["miembros"])

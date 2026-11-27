@@ -1,8 +1,14 @@
 {
- "descripcion": "Ensamble del envío 58945688 (público 0.49702): media simple de 10 miembros, cada uno con la HR recortada a 0–100. Pesos entrenados con todos los datos de train.npz: no tienen validación propia.",
- "envio_kaggle": 58945688,
- "notebook": "train/t09b_capacidad.ipynb",
- "kernel_kaggle": "johancg04/vicuna-t09b-capacidad v2",
+ "descripcion": "Ensamble del envío submission_mezcla15_lead.zip (26 nov 2026, público 0.49888): media simple de 15 miembros (r1, r2 y lead, 5 semillas cada uno), cada uno con la HR recortada a 0–100. Pesos entrenados con todos los datos de train.npz: no tienen validación propia; la mezcla valida 0.48809 (A) y 0.48979 (B).",
+ "envio_kaggle": null,
+ "notebook": [
+  "train/t09b_capacidad.ipynb (r1, r2)",
+  "train/t09d_lead.ipynb (lead)"
+ ],
+ "kernel_kaggle": [
+  "johancg04/vicuna-t09b-capacidad v2",
+  "johancg04/vicuna-t09d-lead v1"
+ ],
  "variante": "residuo_crudo_profundo",
  "estadisticas": "estadisticas_ensamble.npz",
  "configuraciones": {
@@ -43,6 +49,26 @@
    "profundo": true,
    "peso_mj": 1,
    "epocas": 25
+  },
+  "lead": {
+   "w": 64,
+   "bloques": [
+    1,
+    2,
+    4,
+    1
+   ],
+   "enc_prof": false,
+   "dropout": 0.1,
+   "wd": 0.0001,
+   "lags": 3,
+   "skip": false,
+   "residuo": "crudo",
+   "terreno": false,
+   "profundo": true,
+   "peso_mj": 1,
+   "epocas": 25,
+   "lead": "lineal"
   }
  },
  "normalizacion": {
@@ -132,6 +158,43 @@
    "sha256": "e26ea285e70d87c7a06f6560fd8ac161071cadec12b0e26736c1386ac84c0337",
    "configuracion": "r2",
    "semilla": 4
+  },
+  {
+   "archivo": "ensamble/lead_s0.pt",
+   "sha256": "569fef521232f8ac9b2b3311603ad2cd7d72b6b41dc3268f2f2c4befb54f39f9",
+   "configuracion": "lead",
+   "semilla": 0
+  },
+  {
+   "archivo": "ensamble/lead_s1.pt",
+   "sha256": "4f925151475ff3261c9b74889fa984eb8803a3fab1e7e6a1447755443c149f11",
+   "configuracion": "lead",
+   "semilla": 1
+  },
+  {
+   "archivo": "ensamble/lead_s2.pt",
+   "sha256": "d9267cf37e24527189273fcd421c1a912876b3ed43b32245f7d8eb7a92ac8865",
+   "configuracion": "lead",
+   "semilla": 2
+  },
+  {
+   "archivo": "ensamble/lead_s3.pt",
+   "sha256": "710c01cb64d15d0f9183d9eab25be18fd2bf67b1e88d61d7fe10090dd8e00c84",
+   "configuracion": "lead",
+   "semilla": 3
+  },
+  {
+   "archivo": "ensamble/lead_s4.pt",
+   "sha256": "ca41a4406ee3569e3ac58a0656c5f0ba8dae1fd8f2542c52c7f18c86cf4bbc65",
+   "configuracion": "lead",
+   "semilla": 4
   }
- ]
+ ],
+ "envio": {
+  "archivo": "submission_mezcla15_lead.zip",
+  "publico": 0.49888,
+  "fecha": "2026-11-26",
+  "nota": "La web de Kaggle no muestra el número de referencia; anotarlo con `kaggle competitions submissions`.",
+  "anterior": 58945688
+ }
 }
