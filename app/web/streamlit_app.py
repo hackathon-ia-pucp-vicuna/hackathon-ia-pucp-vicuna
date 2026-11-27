@@ -1,11 +1,12 @@
 """
-Helada Andina · App de Streamlit (T44, T17 · HU-02, HU-04, HU-07).
+Helada Andina · App de Streamlit (T44, T17, T19 · HU-02, HU-04, HU-06, HU-07).
 
     zona y cultivo → Open-Meteo (GFS, con caché) → predecir() → reglas → mensaje
                                                  ↘ GFS crudo interpolado (comparación)
 
 Muestra el nivel de riesgo, la hora de inicio y la duración bajo el umbral del cultivo, la T mínima
-del modelo y la del GFS crudo, y la tabla por hora (hora de Lima).
+del modelo y la del GFS crudo, y la tabla por hora (hora de Lima). Al final, un formulario para confirmar
+si heló en una noche pasada (SQLite, sin datos personales; ver app/storage.py).
 
 Caché: el pronóstico de Open-Meteo se guarda en app/gfs_cache.npz (3 h) y el cálculo de la noche
 (modelo y GFS crudo en toda la grilla) en la caché de Streamlit por 3 h, así que cambiar de zona o de
@@ -18,6 +19,7 @@ Ejecutar desde la raíz del repo (Python 3.12):
 import os
 import sys
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -29,11 +31,12 @@ sys.path.insert(0, str(APP))
 
 from frost.advice import AVISO_LIMITES, mensaje  # noqa: E402
 from frost.comparar import t_gfs_crudo_c  # noqa: E402
-from frost.rules import (UmbralInvalido, ZonaFueraDeGrilla, a_hora_lima, cargar_yaml,  # noqa: E402
+from frost.rules import (LIMA, UmbralInvalido, ZonaFueraDeGrilla, a_hora_lima, cargar_yaml,  # noqa: E402
                          celda_de_zona, evaluar_noche, horas_de_la_noche, noche_objetivo,
                          umbral_de_cultivo)
 from gfs_forecast import get_gfs_forecast, make_windows  # noqa: E402
 from predict import ModeloNoDisponible, cargar_static, predecir  # noqa: E402
+from storage import ConfirmacionInvalida, guardar_confirmacion  # noqa: E402
 
 CACHE_GFS = Path(os.environ.get("HELADA_CACHE_GFS", APP / "gfs_cache.npz"))   # en .gitignore
 CACHE_HORAS = 3
@@ -41,6 +44,7 @@ CACHE_HORAS = 3
 MSJ_SIN_PRONOSTICO = ("No se pudo obtener el pronóstico: revisa tu conexión a internet e inténtalo de nuevo "
                       "en unos minutos.")
 MSJ_NOCHE_FUERA = "El pronóstico disponible no cubre la noche de hoy. Intenta de nuevo más tarde."
+NOCHES_A_CONFIRMAR = 7
 MSJ_INTERNO = ("Ocurrió un problema al preparar el aviso. Inténtalo de nuevo en unos minutos; "
                "si sigue pasando, avísale al equipo de Helada Andina.")
 
@@ -98,8 +102,36 @@ def tabla_por_hora(t_noche, t_modelo, t_gfs, umbral_c):
     })
 
 
+def formulario_confirmacion(clave, zonas):
+    """Confirmación sí/no de una noche pasada en la zona elegida (T19). Guarda solo zona, fecha y respuesta."""
+    zona = zonas[clave]
+    with st.expander(f"¿Heló en {zona['nombre']}? Confírmalo y ayúdanos a mejorar el aviso"):
+        hoy = datetime.now(LIMA).date()
+        mananas = [hoy - timedelta(days=i) for i in range(NOCHES_A_CONFIRMAR)]
+        with st.form("confirmacion"):
+            fecha = st.selectbox("Noche", mananas,
+                                 format_func=lambda d: f"Del {d - timedelta(days=1):%d/%m} al {d:%d/%m}")
+            respuesta = st.radio(f"¿Heló esa noche en {zona['nombre']}?", ["Sí", "No"], index=None, horizontal=True)
+            enviado = st.form_submit_button("Guardar respuesta")
+        if enviado:
+            if respuesta is None:
+                st.warning("Elige sí o no antes de guardar.")
+            else:
+                try:
+                    reemplazo = guardar_confirmacion(clave, fecha, respuesta == "Sí", zonas)
+                    st.success("Actualizamos tu respuesta para esa noche. ¡Gracias!" if reemplazo
+                               else "Guardamos tu respuesta. ¡Gracias!")
+                except ConfirmacionInvalida as e:
+                    st.error(str(e))
+                except Exception:
+                    st.error("No se pudo guardar tu respuesta. Inténtalo de nuevo en unos minutos.")
+        st.caption("Solo guardamos la localidad, la noche y tu respuesta. No pedimos ni guardamos datos personales.")
+
+
 def mostrar_error(texto):
     st.error(texto)
+    if "clave" in globals():                         # la confirmación no depende del pronóstico ni del modelo
+        formulario_confirmacion(clave, zonas)
     st.stop()
 
 
@@ -173,3 +205,5 @@ try:
     st.caption(AVISO_LIMITES)
 except Exception:
     mostrar_error(MSJ_INTERNO)
+
+formulario_confirmacion(clave, zonas)
