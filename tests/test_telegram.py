@@ -49,6 +49,12 @@ def respuesta(ok=True, message_id=7, descripcion=None, status=200):
     return resp
 
 
+@pytest.fixture(autouse=True)
+def sin_env_real(monkeypatch, tmp_path):
+    """Las pruebas nunca leen el .env real de quien las corre."""
+    monkeypatch.setattr(telegram, "RUTA_ENV", tmp_path / "no_hay.env")
+
+
 @pytest.fixture
 def entorno(monkeypatch):
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
@@ -187,3 +193,57 @@ def test_calcular_avisos_da_uno_por_zona(monkeypatch):
             pytest.raises(aviso.NocheNoCubierta):
         aviso.calcular_avisos("20260705")
     assert np.isfinite([a["resultado"]["tmin_c"] for a in avisos]).all()
+
+
+def test_env_se_carga_sin_pisar_el_entorno(monkeypatch, tmp_path):
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "@ya_definido")
+    monkeypatch.delenv("HELADA_PRUEBA_VACIA", raising=False)
+    env = tmp_path / ".env"
+    env.write_text(f"# comentario\n\nexport TELEGRAM_BOT_TOKEN=\"{TOKEN}\"\nTELEGRAM_CHAT_ID=@del_archivo\n"
+                   "HELADA_PRUEBA_VACIA=\nlinea sin igual\n", encoding="utf-8")
+    cargadas = telegram.cargar_env(env)
+    assert cargadas == ["TELEGRAM_BOT_TOKEN"]                       # devuelve nombres, nunca valores
+    assert telegram.configuracion() == (TOKEN, "@ya_definido")      # el entorno manda sobre .env
+    assert "HELADA_PRUEBA_VACIA" not in __import__("os").environ    # valores vacíos no se cargan
+    assert telegram.cargar_env(tmp_path / "no_existe.env") == []
+
+
+def test_main_lee_el_env_de_la_raiz(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
+    monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+    env = tmp_path / ".env"
+    env.write_text(f"TELEGRAM_BOT_TOKEN={TOKEN}\nTELEGRAM_CHAT_ID={CANAL}\n", encoding="utf-8")
+    monkeypatch.setattr(telegram, "RUTA_ENV", env)
+    monkeypatch.setattr(telegram, "RUTA_REGISTRO", tmp_path / "r.sqlite")
+    with mock.patch.object(aviso, "calcular_avisos", return_value=[aviso_de()]), \
+            mock.patch.object(requests, "post", return_value=respuesta()) as post:
+        assert telegram.main([]) == 0
+    assert post.call_args.kwargs["json"]["chat_id"] == CANAL
+    assert TOKEN not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("args, texto", [
+    (["--zonas", "lima"], "Zona desconocida: lima. Zonas disponibles: carhuaz, huaraz, yungay."),
+    (["--noche", "27/11/2026"], "La noche «27/11/2026» no es válida: usa el formato AAAAMMDD"),
+    (["--noche", "20261340"], "La noche «20261340» no es válida"),
+])
+def test_zona_o_noche_invalidas_dan_mensaje_en_español(args, texto, capsys):
+    with mock.patch.object(gfs_forecast, "get_gfs_forecast") as descarga:
+        assert telegram.main(["--prueba", *args]) == 1
+    descarga.assert_not_called()                                    # falla antes de descargar
+    err = capsys.readouterr().err
+    assert texto in err and "Traceback" not in err and "KeyError" not in err
+
+
+def test_aviso_usa_la_misma_variable_de_caché_que_la_app(monkeypatch, tmp_path):
+    import importlib
+
+    monkeypatch.setenv("HELADA_CACHE_GFS", str(tmp_path / "otra_cache.npz"))
+    importlib.reload(aviso)
+    try:
+        assert aviso.CACHE_GFS == tmp_path / "otra_cache.npz"
+    finally:
+        monkeypatch.delenv("HELADA_CACHE_GFS")
+        importlib.reload(aviso)
+    assert aviso.CACHE_GFS == RAIZ / "app" / "gfs_cache.npz"

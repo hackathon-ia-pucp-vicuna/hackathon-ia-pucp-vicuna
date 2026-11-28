@@ -2,7 +2,7 @@
 
 - `telegram.py`: envía el aviso de la noche al canal público del equipo (T18). Un mensaje por zona, de 600 caracteres como máximo, sin duplicados (registro en `avisos_enviados.sqlite`, que no va al repo) y con modo de prueba sin envío.
 - El aviso se calcula con `app/aviso.py`: el mismo `predecir()`, las mismas reglas y los mismos mensajes que la app.
-- El token del bot **nunca** va en el repo: se lee de variables de entorno (`.env` en local, secretos de GitHub en Actions). Ver `.env.example` (T38).
+- El token del bot **nunca** va en el repo: se lee de variables de entorno (secretos de GitHub en Actions). En local, `telegram.py` carga además `.env` de la raíz del repo, si existe, sin pisar variables ya definidas (lector propio, sin dependencias). Ver `.env.example` (T38).
 
 ```bash
 python app/notify/telegram.py --prueba        # muestra los avisos de la próxima noche, no envía

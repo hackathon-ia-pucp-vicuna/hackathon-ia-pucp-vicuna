@@ -7,7 +7,9 @@ Lo usa el envío por Telegram (app/notify/telegram.py). Es el mismo cálculo que
 mismo pronóstico (si falla Open-Meteo, el último guardado; app/pronostico.py), mismas ventanas, mismo
 `predecir()` (mismos pesos que Kaggle), mismas reglas y mismos mensajes.
 """
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -23,12 +25,33 @@ import gfs_forecast  # noqa: E402
 import predict  # noqa: E402
 from pronostico import obtener_pronostico  # noqa: E402
 
-CACHE_GFS = APP / "gfs_cache.npz"     # en .gitignore; la misma caché que la app
+# La misma caché que la app (en .gitignore); HELADA_CACHE_GFS permite otra ruta, igual que en la app
+CACHE_GFS = Path(os.environ.get("HELADA_CACHE_GFS", APP / "gfs_cache.npz"))
 CACHE_HORAS = 3
 
 
 class NocheNoCubierta(RuntimeError):
     """El pronóstico no tiene horas de la noche objetivo."""
+
+
+class PedidoInvalido(ValueError):
+    """Zona o noche pedidas que no existen. El mensaje está en español."""
+
+
+def validar_pedido(noche, claves, zonas):
+    """Revisa --noche (YYYYMMDD, fecha real) y --zonas (claves de zones.yaml) antes de descargar nada."""
+    if noche is not None:
+        try:
+            if len(noche) != 8 or not noche.isdigit():
+                raise ValueError
+            datetime.strptime(noche, "%Y%m%d")
+        except (TypeError, ValueError):
+            raise PedidoInvalido(f"La noche «{noche}» no es válida: usa el formato AAAAMMDD, por ejemplo 20261127.") from None
+    if claves is not None:
+        desconocidas = [c for c in claves if c not in zonas]
+        if desconocidas:
+            raise PedidoInvalido(f"Zona desconocida: {', '.join(desconocidas)}. "
+                                 f"Zonas disponibles: {', '.join(zonas)}.")
 
 
 def calcular_avisos(noche=None, cultivo="papa", claves=None):
@@ -38,8 +61,9 @@ def calcular_avisos(noche=None, cultivo="papa", claves=None):
     cultivo, umbral, el resultado de evaluar_noche(), el mensaje de advice.py y, si se usó el pronóstico
     guardado porque falló Open-Meteo, su advertencia.
     """
-    noche = noche or noche_objetivo()
     zonas = cargar_yaml("zones.yaml")
+    validar_pedido(noche, claves, zonas)
+    noche = noche or noche_objetivo()
     claves = list(zonas) if claves is None else list(claves)
     umbral = umbral_de_cultivo(cultivo)
     X, times, advertencia = obtener_pronostico(CACHE_GFS, CACHE_HORAS)

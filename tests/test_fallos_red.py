@@ -35,6 +35,12 @@ from test_telegram import TOKEN, aviso_de  # noqa: E402
 GUARDADO = datetime(2026, 11, 26, 23, 0, tzinfo=timezone.utc).timestamp()
 
 
+@pytest.fixture(autouse=True)
+def sin_env_real(monkeypatch, tmp_path):
+    """Las pruebas nunca leen el .env real de quien las corre (telegram.main() carga .env)."""
+    monkeypatch.setattr(telegram, "RUTA_ENV", tmp_path / "no_hay.env")
+
+
 def guardar_cache(ruta):
     X, times = pronostico_sintetico()
     np.savez(ruta, X=X, times=times)
