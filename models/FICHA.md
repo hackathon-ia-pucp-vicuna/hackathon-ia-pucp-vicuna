@@ -2,7 +2,27 @@
 
 Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS (~27 km) a lo que daría WRF (3 km) en la Cordillera Blanca.
 
-## Producto desde el 26 nov: mezcla de 15 (envío 0.49888)
+## Producto desde el 28 nov: mezcla de 30 (envío 0.50332)
+
+`models/modelo.json` lista **30 miembros**, 5 semillas de cada configuración. La salida es su media simple, cada uno con la HR recortada a 0–100 %.
+
+| Archivos en `ensamble/` | Configuración | Origen |
+|---|---|---|
+| `r1_s*`, `r2_s*` | ronda 1, y la misma con dropout 0.1 | `train/t09b_capacidad.ipynb` |
+| `lead_s*` | r2 más la hora desde el inicio del WRF (h/23) | `train/t09d_lead.ipynb` |
+| `ancho96_s*` | `lead` con ancho 96 | `train/t09h_diversidad.ipynb` |
+| `ep40_s*` | `lead` con 40 épocas | `train/t09h_diversidad.ipynb` |
+| `unet_s*` | U-Net de ancho 48 a 3 km, con el GFS interpolado | `train/t09h_diversidad.ipynb` |
+
+- **Envío:** `submission_mezcla30.csv`, 27 nov, público **0.50332**. Referencia de Kaggle: **59028408**.
+- **Validación de la mezcla de 30** (corte temporal): A **0.49151**, B **0.49631** (mezcla de 15: 0.48808 y 0.48981). Los pesos publicados se reentrenaron con todos los datos: no tienen validación propia.
+- **Normalización:** la misma de antes (todas las horas); `estadisticas_ensamble.npz` no cambia (diferencia 0.0 frente a las de `ancho96` y `ep40`).
+- **Tamaño:** **71.7 MB** los 30 (71,665,680 bytes); la mezcla de 15 pesaba 24.3 MB.
+- **Reproducción con `predecir()`** (28 nov, Docker, torch 2.5.1+cpu): las **646,800 filas** del CSV enviado, diferencia máxima RH 0.00095, T 0.00099, U 0.00094, V 0.00096 (el CSV es la media de seis CSV redondeados a 3 decimales). Paridad app/notebook con los 30 pesos: diferencia 0.0.
+- **Tiempo de 24 h en CPU** (28 nov, Intel i9-9880H, Docker, equipo en reposo): limitado a 2 CPU, **9.8 s** con 30 miembros frente a 4.5 s con 15 (una medición cada uno); con 4 hilos, **9.5 s** (mediana de 3, entre 6.9 y 12.1) frente a 2.9 s. Pico de memoria del proceso: unos 530 MB. Con el equipo cargado o frenado por temperatura se midieron de 32 a 90 s. Falta medirlo en el servidor final (T47).
+- **App** (Streamlit, `AppTest`, Open-Meteo en vivo): primera carga 11.6 s, 0 excepciones y 0 errores en las tres localidades; con la caché llena, menos de 0.1 s.
+
+## Mezcla de 15 (envío 0.49888, producto del 26 al 28 nov; historial)
 
 `models/modelo.json` lista **15 miembros**: los 10 del envío 58945688 (r1 y r2, abajo) y 5 de la configuración `lead` (`ensamble/lead_s0.pt` … `lead_s4.pt`): r2 más la hora desde el inicio del WRF como entrada (h/23), de `train/t09d_lead.ipynb`, Kaggle `johancg04/vicuna-t09d-lead` v1. El WRF de la competencia se reinicia cada día a las 00 UTC desde el GFS (ver `docs/modelo/experimentos.md`).
 
@@ -13,9 +33,9 @@ Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS
 - **Reproducción con `predecir()`** (Docker, torch 2.5.1+cpu): las **646,800 filas** del CSV enviado, diferencia máxima RH 0.00082, T 0.00086, U 0.00083, V 0.00083 (el CSV es la media de tres CSV redondeados a 3 decimales). Paridad app/notebook con los 15 pesos: diferencia 0.0.
 - **Tiempo de 24 h en CPU** (Intel i9-9880H, Docker, mediana de 5): **3.9 s** con 4 hilos; **5.9 s** limitado a 2 CPU. Las 792 h de test: 131 s.
 
-## Ensamble del envío 58945688 (T50, modelo del producto)
+## Ensamble del envío 58945688 (mezcla de 10; historial)
 
-**Envío del producto:** ref. 58945688, público **0.49702** (26 nov). Es la media simple de 10 miembros, cada uno con la HR recortada a 0–100 %. Hasta T49, `app/predict.py` sigue cargando la línea base de abajo.
+**Envío:** ref. 58945688, público **0.49702** (26 nov). Es la media simple de 10 miembros, cada uno con la HR recortada a 0–100 %. Sus 10 miembros siguen dentro de la mezcla de 30.
 
 | Archivo | Contenido |
 |---|---|
@@ -28,7 +48,9 @@ Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS
 - **Origen:** `train/t09b_capacidad.ipynb`, Kaggle `johancg04/vicuna-t09b-capacidad` v2 (Tesla T4, Python 3.13.16, NumPy 2.1.3, torch 2.11.0). Los SHA-256 coinciden con la salida descargada de Kaggle (26 nov).
 - **Sin validación propia:** los 10 se reentrenaron con todos los datos (18 feb – 30 jun). La validación de esa configuración, con corte temporal (A, 16–30 jun), es **0.48626** (RMSE RH 9.190, T 0.836, U 1.555, V 1.475); ver `docs/modelo/experimentos.md`.
 - **Reproducción en CPU** (Docker `python:3.12-slim`, torch 2.5.1+cpu): la inferencia del propio notebook con los 10 pesos y las estadísticas generadas por el script reproduce `submission_mezcla.csv` en las **646,800 filas**, con una diferencia máxima de 0.00054 (RH), 0.00061 (T), 0.00051 (U) y 0.00051 (V). El CSV va redondeado a 3 decimales. `tests/test_ensamble.py` repite la comparación con una muestra fija de 2,400 filas (24 horas).
-- **Tiempo de 24 horas en CPU** (Intel i9-9880H, Docker, torch 2.5.1+cpu, mediana de 7): 4 hilos: 1 modelo 0.20 s, 5 modelos 1.12 s, **10 modelos 2.60 s**. Limitado a 2 CPU y 2 hilos: 0.34 s, 1.86 s y **4.19 s**.
+- **Reproducción con `predecir()`** (26 nov, `3ab30e2`, Docker, torch 2.5.1+cpu): sobre las 646,800 filas, diferencia máxima 0.00053 (RH), 0.00063 (T), 0.00051 (U) y 0.00050 (V), dentro del límite de 0.002. La paridad entre el notebook y la app con los 10 pesos da 0 en 5 muestras (`tests/test_paridad.py`).
+- **Tiempo de 24 horas en CPU con el código del notebook** (Intel i9-9880H, Docker, torch 2.5.1+cpu, mediana de 7): 4 hilos: 1 modelo 0.20 s, 5 modelos 1.12 s, **10 modelos 2.60 s**. Limitado a 2 CPU y 2 hilos: 0.34 s, 1.86 s y **4.19 s**.
+- **Tiempo de 24 horas en CPU con `predecir()`**, 10 modelos (26 nov, `3ab30e2`, mismo equipo y versiones, mediana de 7): **2.11 s** con 4 hilos y **4.21 s** limitado a 2 CPU y 2 hilos, con otros contenedores en marcha (carga media 6–8). En otras corridas con la máquina cargada se midieron entre 7.8 y 22 s (PR #28). Falta medirlo en el servidor final (T47).
 - **Entrada y salida:** igual que la línea base, pero la red suma su corrección al GFS de la hora t interpolado a 3 km: `pred = clim[h] + (red(x, h) + (GFS_interp − clim[h]) / anom_sd) × anom_sd`.
 
 ---
@@ -49,7 +71,7 @@ Los pesos pesan unos 0.6 MB, muy por debajo de los 100 MB: no hace falta un enla
 
 Los tensores se guardaron desde GPU: para cargarlos en CPU se usa `map_location="cpu"` (lo hace `app/predict.py`).
 
-`app/predict.py` necesita además `estadisticas.npz` y `data/static.npz` (relieve y grillas). Ninguno de los dos va al repo.
+Para cargar la línea base, `app/predict.py` necesita además un manifiesto con la variante `starter`, `estadisticas.npz` y `data/static.npz` (relieve y grillas). Los dos `.npz` no van al repo.
 
 ### Cómo obtener `estadisticas.npz`
 
