@@ -11,7 +11,9 @@ import yaml
 FROST = Path(__file__).resolve().parent
 LIMA = timezone(timedelta(hours=-5))
 NIVELES = ("sin riesgo", "vigilancia", "helada probable")
-HORAS_NOCHE_UTC = range(0, 13)            # 00–12 UTC = 19:00–07:00 Lima
+# 01–12 UTC = 20:00–07:00 Lima. Se excluye 00 UTC (19:00): el WRF se reinicia a esa hora y ese cuadro
+# se parece al estado inicial (GFS), con un salto frente a la 01 UTC que el modelo reproduce.
+HORAS_NOCHE_UTC = range(1, 13)
 
 
 class ZonaFueraDeGrilla(ValueError):
@@ -78,7 +80,7 @@ def celda_de_zona(lat, lon, wrf_lats, wrf_lons):
 
 def noche_objetivo(ahora_utc=None):
     """
-    Fecha UTC 'YYYYMMDD' de la noche a mostrar (horas 00–12 UTC de ese día).
+    Fecha UTC 'YYYYMMDD' de la noche a mostrar (horas 01–12 UTC de ese día).
     Antes de las 07:00 Lima: la noche en curso. Desde las 07:00 Lima: la noche siguiente.
     """
     ahora_lima = (ahora_utc or datetime.now(timezone.utc)).astimezone(LIMA)

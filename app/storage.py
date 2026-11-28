@@ -4,7 +4,7 @@ Confirmaciones sí/no de helada en SQLite (T19 · HU-06).
 Al día siguiente, la persona responde si heló en su zona. Se guarda solo:
     zona             clave de zones.yaml (carhuaz, huaraz, …)
     fecha            mañana de la noche confirmada, en hora de Lima (YYYY-MM-DD): la noche del 26 al 27/11
-                     se guarda como 2026-11-27, que es también el día UTC de sus horas 00–12 (rules.py)
+                     se guarda como 2026-11-27, que es también el día UTC de sus horas 01–12 (rules.py)
     helada           1 = sí heló, 0 = no heló
     actualizado_utc  cuándo se guardó la última respuesta
 Zona y fecha forman la clave primaria: una segunda respuesta reemplaza a la anterior (vale la última) y

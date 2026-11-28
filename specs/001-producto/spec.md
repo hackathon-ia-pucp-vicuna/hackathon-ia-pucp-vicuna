@@ -11,7 +11,7 @@ Estado: **aprobada** por el equipo (PR #2, T04). Los umbrales son una referencia
 1. La persona elige su zona y su cultivo (o consulta una zona predefinida).
 2. El sistema obtiene el pronóstico GFS de Open-Meteo (con caché) y arma ventanas t-2, t-1, t.
 3. El modelo predice T, HR, U, V a 3 km.
-4. Para la zona se toma la celda correspondiente y, de la noche (19:00–07:00 Lima = 00–12 UTC), la mínima, el viento y la humedad.
+4. Para la zona se toma la celda correspondiente y, de la noche (20:00–07:00 Lima = 01–12 UTC), la mínima, el viento y la humedad.
 5. Se clasifica: sin riesgo, vigilancia o helada probable; se estima hora de inicio y duración bajo el umbral.
 6. Se genera la recomendación según el cultivo y se muestra la comparación GFS crudo vs. modelo.
 7. El aviso sale por la web y por un canal de Telegram la tarde previa.
@@ -38,7 +38,7 @@ Varios cultivos, mapa de riesgo por zona (folium + OpenStreetMap), versión en q
 2. **Segunda confirmación:** reemplaza a la anterior (vale la última). Zona y fecha forman una clave única en SQLite.
 3. **Telegram:** un solo canal para todas las zonas. El envío lo programa GitHub Actions a las 17:00 de Lima (22:00 UTC), con el token en los secretos de GitHub (T48). Si falla, el script se corre a mano.
 4. **"GFS crudo" de una zona:** el valor del GFS interpolado a la celda de 3 km, igual que en T36.
-5. **Horas de la noche:** todas las horas entre 00 y 12 UTC (19:00 a 07:00 en Lima).
+5. **Horas de la noche:** todas las horas entre 01 y 12 UTC (20:00 a 07:00 en Lima). Cambio del 28 nov (antes desde las 00 UTC): el WRF se reinicia a las 00 UTC y en `train.npz` ese cuadro salta frente a la 01 UTC; era la mínima de la noche en Carhuaz y Yungay en 121 de 121 noches (Huaraz, 112).
 6. **"Esta noche":** antes de las 07:00 (Lima) se muestra la noche en curso; desde las 07:00, la siguiente.
 7. **Mapa:** fuera del alcance mínimo (es una ampliación).
 8. **Zona → celda:** se usa la celda del DEM tal cual y se muestra la diferencia entre la altura de la localidad y la de la celda. La corrección por altura queda como ampliación.

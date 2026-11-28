@@ -129,5 +129,5 @@ def test_noche_objetivo_y_horas_de_la_noche():
     # 06:59 Lima → noche en curso; 07:00 Lima → noche siguiente
     assert noche_objetivo(datetime(2024, 6, 16, 11, 59, tzinfo=timezone.utc)) == "20240616"
     assert noche_objetivo(datetime(2024, 6, 16, 12, 0, tzinfo=timezone.utc)) == "20240617"
-    m = horas_de_la_noche(["2024061523", "2024061600", "2024061612", "2024061613"], "20240616")
-    assert m.tolist() == [False, True, True, False]
+    m = horas_de_la_noche(["2024061523", "2024061600", "2024061601", "2024061612", "2024061613"], "20240616")
+    assert m.tolist() == [False, False, True, True, False]      # 00 UTC (19:00 Lima) queda fuera

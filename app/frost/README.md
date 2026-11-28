@@ -10,6 +10,6 @@
 Reglas (ver `specs/001-producto/spec.md`):
 - Niveles según la T mínima de la noche: más de 2 °C = sin riesgo; de 0 a 2 °C = vigilancia; 0 °C o menos = helada probable.
 - Sin fuente verificada en `thresholds.yaml`, solo se muestra la referencia general de 0 °C, rotulada como tal.
-- Noche: 19:00–07:00 en Lima = 00–12 UTC (todas las horas).
+- Noche: 20:00–07:00 en Lima = 01–12 UTC (todas las horas). La 00 UTC (19:00) se excluye: el WRF se reinicia a esa hora y ese cuadro no es continuo con los siguientes.
 - El modelo no predice lluvia, nubosidad, radiación ni ráfagas: el mensaje lo declara.
 - Orientación: en la grilla del modelo (70×35) y en el DEM, la fila 0 es el **sur**.
