@@ -128,9 +128,11 @@ def formulario_confirmacion(clave, zonas):
         st.caption("Solo guardamos la localidad, la noche y tu respuesta. No pedimos ni guardamos datos personales.")
 
 
-def mostrar_error(texto):
+def mostrar_error(texto, clave=None, zonas=None):
+    """Error en español, sin trazas. Si ya hay zona elegida, el formulario de confirmación sigue
+    disponible: confirmar no depende del pronóstico ni del modelo."""
     st.error(texto)
-    if "clave" in globals():                         # la confirmación no depende del pronóstico ni del modelo
+    if clave is not None:
         formulario_confirmacion(clave, zonas)
     st.stop()
 
@@ -160,11 +162,11 @@ try:
     t_noche, t_modelo, t_gfs = res["times"], res["t_modelo"][:, fila, col], res["t_gfs"][:, fila, col]
     r = evaluar_noche(t_modelo, t_noche, umbral)
 except (ModeloNoDisponible,) as e:
-    mostrar_error(f"El modelo no está disponible. {e}")
+    mostrar_error(f"El modelo no está disponible. {e}", clave, zonas)
 except (ZonaFueraDeGrilla, UmbralInvalido, SinPronostico, NocheNoCubierta) as e:
-    mostrar_error(str(e))
+    mostrar_error(str(e), clave, zonas)
 except Exception:
-    mostrar_error(MSJ_INTERNO)
+    mostrar_error(MSJ_INTERNO, clave, zonas)
 
 try:
     if res["aviso"]:
@@ -204,6 +206,6 @@ try:
                "El GFS crudo es el pronóstico global (unos 27 km) interpolado a esa celda.")
     st.caption(AVISO_LIMITES)
 except Exception:
-    mostrar_error(MSJ_INTERNO)
+    mostrar_error(MSJ_INTERNO, clave, zonas)
 
 formulario_confirmacion(clave, zonas)
