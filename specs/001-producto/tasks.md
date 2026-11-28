@@ -172,14 +172,14 @@ Criterios de aceptación:
 HU: HU-09 · Responsable: @johancg04 · Verifica: @DuDu-0912
 Fecha: 28 nov. Depende de: T49.
 Criterios de aceptación:
-- [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (al 26 nov, el candidato es 58926424); es una media simple de miembros de una variante que `predecir()` soporta.
+- [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (es el envío 58945688, la mezcla de 10 modelos); es una media simple de miembros de una variante que `predecir()` soporta.
 - [ ] Todos los `.pt` de ese envío están en `models/` y sus SHA-256 coinciden con la salida de Kaggle del notebook que lo generó.
 - [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` y `clim_gfs` no van al repo, y `generar_estadisticas.py` no calcula `clim_gfs` porque ninguna variante soportada la usa.
 - [ ] La paridad entre el notebook que generó el envío y la app pasa con todos sus pesos (diferencia < 1e-5 en 5 muestras).
 - [ ] `predecir()` sobre `test.npz` reproduce ese envío en las 646,800 filas (diferencia máxima ≤ 0.002 por variable; se reporta la medida).
 - [ ] Se anotan el tiempo de inferencia de 24 horas en CPU y el tamaño total de los pesos.
 - [ ] La ficha, el README y `experimentos.md` quedan actualizados y dicen que estos pesos no tienen validación propia.
-- [ ] pytest sin fallos; la prueba que reproduce el envío sustituye a la de la línea base.
+- [ ] pytest sin fallos; la prueba que reproduce el envío se agrega a la de la línea base, que sigue vigente.
 
 ## Sprint 2 · Producto mínimo y modelo final (29 nov–3 dic)
 

@@ -40,7 +40,7 @@ def recortar_del_notebook():
 def modelo_nulo(tmp_path, monkeypatch):
     """Red en cero y climatología con HR por debajo, dentro y por encima de 0–100. Devuelve `clim`."""
     torch = pytest.importorskip("torch")
-    from test_paridad import static_sintetico
+    from test_paridad import escribir_manifiesto, static_sintetico
 
     st = static_sintetico()
     np.savez(tmp_path / "static.npz", **st)
@@ -50,12 +50,14 @@ def modelo_nulo(tmp_path, monkeypatch):
     clim[..., :] = [70.0, 280.0, 150.0, -50.0]     # U y V fuera de 0–100 a propósito: no se tocan
     clim[:, :10, :, 0] = -30.0
     clim[:, 10:20, :, 0] = 130.0
-    np.savez(tmp_path / "estadisticas.npz",
-             mu_x=np.zeros(4, np.float32), sd_x=np.ones(4, np.float32),
-             clim=clim, anom_sd=np.ones(4, np.float32))
+    est = {"mu_x": np.zeros(4, np.float32), "sd_x": np.ones(4, np.float32), "clim": clim,
+           "anom_sd": np.ones(4, np.float32)}
+    np.savez(tmp_path / "estadisticas.npz", **est)
+    # T49: predecir() carga lo que dice el manifiesto (variante starter, un miembro)
+    ruta = escribir_manifiesto(tmp_path, "starter", [tmp_path / "modelo.pt"], est)
     monkeypatch.setattr(predict, "RUTA_STATIC", tmp_path / "static.npz")
-    monkeypatch.setattr(predict, "RUTA_PESOS", tmp_path / "modelo.pt")
-    monkeypatch.setattr(predict, "RUTA_ESTADISTICAS", tmp_path / "estadisticas.npz")
+    monkeypatch.setattr(predict, "RUTA_MODELOS", tmp_path)
+    monkeypatch.setattr(predict, "RUTA_MANIFIESTO", ruta)
     predict.cargar_static.cache_clear()
     predict._cargar.cache_clear()
     yield clim
