@@ -62,10 +62,10 @@ Formato de criterios: Dado / Cuando / Entonces, o una condición verificable (n�
 ## Matriz HU → tareas
 | HU | Tareas |
 |---|---|
-| HU-01 | T04, T07, T12, T15, T35 |
+| HU-01 | T04, T07, T12, T15, T35, T51 |
 | HU-02 | T15, T17, T44 |
 | HU-03 | T05, T16, T23, T28 |
-| HU-04 | T13, T17, T36 |
+| HU-04 | T13, T17, T36, T51 |
 | HU-05 | T18, T38, T48 |
 | HU-06 | T19 |
 | HU-07 | T14, T17 |

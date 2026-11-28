@@ -261,6 +261,21 @@ Criterios de aceptación:
 - [ ] El token se lee de los secretos de GitHub; no aparece en el repo ni en los logs del workflow.
 - [ ] Si el workflow falla, el README explica cómo correr el script a mano.
 
+### T51 · Producto — Rediseño de la interfaz de la app
+HU: HU-04 y HU-01 · Responsable: @lalo-dev8
+Fecha: 3 dic. Depende de: T17. Complementa a T26 (errores, caché y revisión de textos).
+Criterios de aceptación:
+- [ ] Hay un boceto (celular y escritorio) aprobado por otra persona del equipo antes de programar.
+- [ ] En una pantalla de 390×844 se ven sin desplazarse: nivel de riesgo (color, icono y texto), hora de inicio, duración y recomendación.
+- [ ] Gráfico de la temperatura de la noche con las curvas del modelo y del GFS crudo y la línea del umbral del cultivo (HU-04, RF3).
+- [ ] Vista de las localidades con su nivel de riesgo, para compararlas sin cambiar el selector.
+- [ ] El detalle técnico (tabla por hora, celda, fuente del umbral) queda en una sección plegable.
+- [ ] Identidad visual propia (tema, colores, tipografía) con contraste WCAG AA.
+- [ ] Se mantiene: usa solo `predecir()`, errores en español sin trazas, carga con caché en menos de 5 s y pytest pasa.
+- [ ] El PR incluye capturas del antes y el después.
+
+Opcional (no bloquea): mapa con folium y OpenStreetMap (ampliación de la spec); si se hace, anotar la licencia en `docs/licencias.md`.
+
 ### T24 · Modelo — Entrenamiento final y pesos en models/
 HU: HU-09 · Responsable: @johancg04
 Fecha: 1 dic. Depende de: T11 y T50; usa lo que T09, T20 y T21 hayan demostrado en validación hasta esa fecha.
@@ -380,6 +395,6 @@ Criterios de aceptación:
 | @johancg04 | T01, T02, T03, T08, T09, T10, T11, T20, T24, T25, T39, T43, T47, T50 | 14 |
 | @maxrodev | T04, T06, T27, T29, T30, T31, T32, T33, T34, T40, T42, T46, T48 | 13 |
 | @DuDu-0912 | T05, T17, T18, T19, T22, T23, T26, T28, T37, T38, T41, T44, T49 | 13 |
-| @lalo-dev8 | T07, T12, T13, T14, T15, T16, T21, T35, T36, T45 | 10 |
+| @lalo-dev8 | T07, T12, T13, T14, T15, T16, T21, T35, T36, T45, T51 | 11 |
 
-Total: 50 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
+Total: 51 tareas. Si alguien se sobrecarga, reasignar en el tablero y actualizar esta tabla.
