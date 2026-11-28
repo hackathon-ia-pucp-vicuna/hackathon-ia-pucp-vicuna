@@ -11,6 +11,10 @@ Envía el aviso de helada de la noche al canal de Telegram (T18 · HU-05).
   valores, sin pisar las variables que ya estén definidas en el entorno.
 - Modo de prueba (--prueba): arma y muestra los mensajes, sin red de Telegram, sin token y sin
   registrar nada.
+- Si Telegram o el cálculo fallan, el script no se cae: registra el error (sin el token) en
+  app/notify/telegram_errores.log (en .gitignore; HELADA_LOG_TELEGRAM permite otra ruta) y sale con
+  código 1. La app de Streamlit no depende de Telegram (T37).
+- Si Open-Meteo falla, el aviso usa el último pronóstico guardado y el mensaje lo advierte.
 
 Uso, desde la raíz del repo:
     python app/notify/telegram.py --prueba                  # muestra los avisos, no envía
@@ -33,10 +37,12 @@ if str(APP) not in sys.path:
 MAX_CARACTERES = 600
 RUTA_ENV = APP.parent / ".env"
 RUTA_REGISTRO = Path(__file__).resolve().parent / "avisos_enviados.sqlite"
+RUTA_LOG = Path(__file__).resolve().parent / "telegram_errores.log"
 API = "https://api.telegram.org/bot{token}/sendMessage"
 TIEMPO_ESPERA = 20
 EMOJI = {"sin riesgo": "🟢", "vigilancia": "🟡", "helada probable": "🔴"}
 PIE = "Solo estima temperatura, humedad y viento; no predice lluvia, nubosidad, radiación ni ráfagas."
+ADVERTENCIA = "⚠️ No hubo conexión con el servicio de pronóstico: se usó el último guardado, puede estar desactualizado."
 
 
 class ConfiguracionFaltante(RuntimeError):
@@ -57,9 +63,11 @@ def armar_mensaje(aviso):
         datos += f" · bajo {u['helada_c']:g} °C desde las {r['inicio']:%H:%M}, unas {r['duracion_h']:g} h"
     datos += f" ({aviso['cultivo'].lower()}, hora de Lima)."
     partes = [cabecera, f"{r['nivel'].capitalize()}. {aviso['mensaje']}", datos, PIE]
-    for quitar in (None, 3, 2):                       # primero el pie, luego los datos
+    if aviso.get("advertencia"):
+        partes.insert(2, ADVERTENCIA)
+    for quitar in (None, PIE, datos):                 # si no cabe: primero el pie, luego los datos
         if quitar is not None:
-            partes = partes[:quitar]
+            partes.remove(quitar)
         texto = "\n".join(partes)
         if len(texto) <= MAX_CARACTERES:
             return texto
@@ -81,6 +89,22 @@ def marcar_enviado(con, zona, noche, message_id=None):
     con.execute("INSERT OR IGNORE INTO enviados VALUES (?, ?, ?, ?)",
                 (zona, noche, datetime.now(timezone.utc).isoformat(timespec="seconds"), message_id))
     con.commit()
+
+
+def ruta_log():
+    return Path(os.environ.get("HELADA_LOG_TELEGRAM", RUTA_LOG))
+
+
+def registrar_error(texto, ruta=None):
+    """Agrega una línea fechada (UTC) al log de errores, sin el token. Si no se puede escribir, no falla."""
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    if token:
+        texto = texto.replace(token, "***")
+    try:
+        with open(ruta or ruta_log(), "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} · {texto}\n")
+    except OSError:
+        pass
 
 
 def cargar_env(ruta=None):
@@ -154,6 +178,7 @@ def avisar(avisos, prueba=False, ruta_registro=None, salida=print):
             except EnvioFallido as e:
                 res["fallidos"].append(a["clave"])
                 salida(f"{a['clave']} · noche {a['noche']}: {e}")
+                registrar_error(f"{a['clave']} · noche {a['noche']}: {e}")
                 continue
             marcar_enviado(con, a["clave"], a["noche"], mid)
             res["enviados"].append(a["clave"])
@@ -179,6 +204,7 @@ def main(argv=None):
         res = avisar(calcular_avisos(a.noche, a.cultivo, a.zonas), prueba=a.prueba)
     except Exception as e:                             # sin trazas: el mensaje ya explica qué pasó
         print(f"No se envió el aviso: {e}", file=sys.stderr)
+        registrar_error(f"No se envió el aviso ({type(e).__name__}): {e}")
         return 1
     return 1 if res["fallidos"] else 0
 

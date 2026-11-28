@@ -17,9 +17,10 @@ venv/
 .pytest_cache/
 .ruff_cache/
 
-# Base de datos local del producto (confirmaciones)
+# Base de datos local del producto (confirmaciones, avisos enviados) y logs
 *.sqlite
 *.db
+*.log
 
 # Claves y entorno
 .env

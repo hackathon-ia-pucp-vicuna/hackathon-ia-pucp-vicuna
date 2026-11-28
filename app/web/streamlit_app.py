@@ -1,5 +1,5 @@
 """
-Helada Andina · App de Streamlit (T44, T17, T19 · HU-02, HU-04, HU-06, HU-07).
+Helada Andina · App de Streamlit (T44, T17, T19, T37 · HU-02, HU-04, HU-06, HU-07, HU-11).
 
     zona y cultivo → Open-Meteo (GFS, con caché) → predecir() → reglas → mensaje
                                                  ↘ GFS crudo interpolado (comparación)
@@ -7,6 +7,9 @@ Helada Andina · App de Streamlit (T44, T17, T19 · HU-02, HU-04, HU-06, HU-07).
 Muestra el nivel de riesgo, la hora de inicio y la duración bajo el umbral del cultivo, la T mínima
 del modelo y la del GFS crudo, y la tabla por hora (hora de Lima). Al final, un formulario para confirmar
 si heló en una noche pasada (SQLite, sin datos personales; ver app/storage.py).
+
+Si falla Open-Meteo se usa el último pronóstico guardado, con la hora en que se descargó y una
+advertencia (app/pronostico.py); si no hay ninguno, un mensaje en español.
 
 Caché: el pronóstico de Open-Meteo se guarda en app/gfs_cache.npz (3 h) y el cálculo de la noche
 (modelo y GFS crudo en toda la grilla) en la caché de Streamlit por 3 h, así que cambiar de zona o de
@@ -18,7 +21,6 @@ Ejecutar desde la raíz del repo (Python 3.12):
 """
 import os
 import sys
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -34,44 +36,21 @@ from frost.comparar import t_gfs_crudo_c  # noqa: E402
 from entrada_gfs import advertencia_horas_faltantes, ventanas_de_la_noche  # noqa: E402
 from frost.rules import (LIMA, UmbralInvalido, ZonaFueraDeGrilla, a_hora_lima, cargar_yaml,  # noqa: E402
                          celda_de_zona, evaluar_noche, noche_objetivo, umbral_de_cultivo)
-from gfs_forecast import get_gfs_forecast  # noqa: E402
 from predict import ModeloNoDisponible, cargar_static, predecir  # noqa: E402
+from pronostico import SinPronostico, obtener_pronostico  # noqa: E402
 from storage import ConfirmacionInvalida, guardar_confirmacion  # noqa: E402
 
 CACHE_GFS = Path(os.environ.get("HELADA_CACHE_GFS", APP / "gfs_cache.npz"))   # en .gitignore
 CACHE_HORAS = 3
 
-MSJ_SIN_PRONOSTICO = ("No se pudo obtener el pronóstico: revisa tu conexión a internet e inténtalo de nuevo "
-                      "en unos minutos.")
 MSJ_NOCHE_FUERA = "El pronóstico disponible no cubre la noche de hoy. Intenta de nuevo más tarde."
 NOCHES_A_CONFIRMAR = 7
 MSJ_INTERNO = ("Ocurrió un problema al preparar el aviso. Inténtalo de nuevo en unos minutos; "
                "si sigue pasando, avísale al equipo de Helada Andina.")
 
 
-class SinPronostico(RuntimeError):
-    """Open-Meteo no respondió y no hay pronóstico guardado."""
-
-
 class NocheNoCubierta(RuntimeError):
     """El pronóstico no tiene horas de la noche objetivo."""
-
-
-def pronostico_gfs():
-    """(X, times, aviso). Si Open-Meteo falla, usa la última caché con un aviso; si no hay, SinPronostico."""
-    try:
-        X, t = get_gfs_forecast(forecast_hours=48, past_hours=14,
-                                cache_path=str(CACHE_GFS), cache_max_age_h=CACHE_HORAS)
-        return X, t, None
-    except Exception as e:
-        if CACHE_GFS.exists():
-            d = np.load(CACHE_GFS)
-            horas = (time.time() - os.path.getmtime(CACHE_GFS)) / 3600
-            return d["X"], d["times"], (
-                f"No se pudo conectar con el servicio de pronóstico. "
-                f"Se muestra el último pronóstico guardado (de hace {horas:.0f} h)."
-            )
-        raise SinPronostico(MSJ_SIN_PRONOSTICO) from e
 
 
 @st.cache_data(ttl=CACHE_HORAS * 3600, show_spinner=False, max_entries=4)
@@ -81,7 +60,7 @@ def calcular_noche(noche):
     No depende de la zona ni del cultivo: se calcula una vez y queda en caché.
     Devuelve horas UTC, T del modelo y T del GFS crudo en °C (H,70,35) y el aviso de caché vieja.
     """
-    X, times, aviso = pronostico_gfs()
+    X, times, aviso = obtener_pronostico(CACHE_GFS, CACHE_HORAS)
     Xw, t_noche, X_t, faltan = ventanas_de_la_noche(X, times, noche)
     if not len(t_noche):
         raise NocheNoCubierta(MSJ_NOCHE_FUERA)
