@@ -18,6 +18,7 @@ from pathlib import Path
 
 import numpy as np
 
+from frost.rules import HORAS_NOCHE_UTC, a_hora_lima, horas_de_la_noche
 from gfs_forecast import LATS, LONS, get_gfs_forecast
 
 VARIABLES = ("RH", "T", "U", "V")
@@ -80,6 +81,30 @@ def ventanas_por_hora(X, times, k=3):
     times_ok = np.array(ok)
     horas = np.array([int(t[8:10]) for t in times_ok], dtype=np.int64)
     return Xw, times_ok, horas, descartadas
+
+
+def ventanas_de_la_noche(X, times, noche):
+    """
+    Ventanas de las horas de la noche `noche` (YYYYMMDD UTC, 00–12 UTC), solo con horas consecutivas.
+    Lo usan la app y el aviso de Telegram. Devuelve (Xw, times, X_t, faltan): X_t es el GFS de la hora t
+    de cada ventana y `faltan` las horas de la noche que no se pueden predecir ('YYYYMMDDHH').
+    """
+    Xw, t_ok, _, _ = ventanas_por_hora(X, times)
+    X, times = validar_grilla(X, times)
+    m = horas_de_la_noche(t_ok, noche)
+    t_noche = t_ok[m]
+    faltan = [f"{noche}{h:02d}" for h in HORAS_NOCHE_UTC if f"{noche}{h:02d}" not in set(t_noche)]
+    pos = {t: i for i, t in enumerate(times)}
+    return Xw[m], t_noche, X[[pos[t] for t in t_noche]], faltan
+
+
+def advertencia_horas_faltantes(faltan):
+    """Texto en español para las horas de la noche sin predicción (hora de Lima), o None si no falta ninguna."""
+    if not faltan:
+        return None
+    horas = ", ".join(f"{a_hora_lima(t):%H:%M}" for t in faltan)
+    return (f"Faltan datos del pronóstico para estas horas de la noche (hora de Lima): {horas}. "
+            "La mínima y la duración pueden estar subestimadas.")
 
 
 def obtener_entrada(forecast_hours=48, past_hours=2, cache_path=CACHE_POR_DEFECTO, ttl_h=3.0,
