@@ -13,7 +13,7 @@ Este repositorio es **público**: no escribir aquí secretos, claves ni datos de
 - Orientación: en X (GFS) la fila 0 es el **norte**; en Y y DEM la fila 0 es el **sur**; columna 0 = oeste. Tiempos en UTC (Lima = UTC−5). Hay huecos de horas: revisar `times`.
 - Validación **siempre con corte temporal** (últimas dos semanas de junio). Nunca split aleatorio.
 - `score = 1 − (RMSE_RH/25.360 + RMSE_T/2.0652 + RMSE_U/2.6776 + RMSE_V/2.0876)/4`. Envío: CSV `id,RH,T,U,V`, `id = YYYYMMDDHH_fila_col`, horas 00,03,…,21 UTC.
-- Cupo de Kaggle: **10 envíos por día** (contador "0 / 10 used" de la pantalla de envío, verificado el 26 nov). Tope interno: 2 por día, y solo Johan sube, con aprobación. Se eligen 2 submissions finales.
+- Cupo de Kaggle: **10 envíos por día** (`maxDailySubmissions: 10` en la API de Kaggle y contador "0 / 10 used" de la pantalla de envío, verificados el 26 nov). Tope interno: 2 por día, y solo Johan sube, con aprobación. Se eligen 2 submissions finales.
 - Línea base: 0.42782 en el leaderboard público (starter, 25 épocas).
 
 ## 3. Reglas que descalifican (nunca romperlas)
