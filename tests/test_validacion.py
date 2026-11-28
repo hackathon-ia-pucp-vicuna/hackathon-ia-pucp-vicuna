@@ -17,6 +17,7 @@ NOTEBOOK = RAIZ / "train" / "t02_linea_base.ipynb"
 NOTEBOOK_T08 = RAIZ / "train" / "t08_experimentos.ipynb"
 NOTEBOOK_T09 = RAIZ / "train" / "t09_arquitectura.ipynb"
 NOTEBOOK_T09B = RAIZ / "train" / "t09b_capacidad.ipynb"
+NOTEBOOK_Q1 = RAIZ / "train" / "q1_regularizacion.ipynb"
 STARTER = RAIZ / "train" / "starter_notebook.ipynb"
 
 
@@ -108,7 +109,7 @@ def celdas(ruta):
     return ["".join(c["source"]) for c in json.loads(ruta.read_text(encoding="utf-8"))["cells"] if c["cell_type"] == "code"]
 
 
-@pytest.mark.parametrize("notebook", [NOTEBOOK, NOTEBOOK_T08, NOTEBOOK_T09, NOTEBOOK_T09B], ids=lambda r: r.stem)
+@pytest.mark.parametrize("notebook", [NOTEBOOK, NOTEBOOK_T08, NOTEBOOK_T09, NOTEBOOK_T09B, NOTEBOOK_Q1], ids=lambda r: r.stem)
 def test_el_notebook_lleva_la_copia_exacta_del_modulo(notebook):
     copias = [c for c in celdas(notebook) if c.startswith("# COPIA EXACTA de train/validacion.py")]
     assert len(copias) == 1
@@ -127,7 +128,7 @@ def test_el_notebook_no_cambia_modelo_ni_hiperparametros_del_starter():
     assert len(entrenamiento(STARTER)) == 1
 
 
-@pytest.mark.parametrize("notebook", [NOTEBOOK, NOTEBOOK_T08, NOTEBOOK_T09, NOTEBOOK_T09B], ids=lambda r: r.stem)
+@pytest.mark.parametrize("notebook", [NOTEBOOK, NOTEBOOK_T08, NOTEBOOK_T09, NOTEBOOK_T09B, NOTEBOOK_Q1], ids=lambda r: r.stem)
 def test_el_notebook_es_sintaxis_valida_y_no_importa_app(notebook):
     for c in celdas(notebook):
         for nodo in ast.walk(ast.parse(c)):
