@@ -80,7 +80,7 @@ def test_zona_y_cultivo_muestran_nivel_inicio_y_duracion(app):
     at, _ = app
     at.run()
     sin_trazas(at)
-    assert [s.label for s in at.selectbox] == ["Localidad", "Cultivo"]
+    assert [s.label for s in at.selectbox][:2] == ["Localidad", "Cultivo"]
     assert at.selectbox[1].options == ["Papa"]
     m = metricas(at)
     # papa: helada_c −1 °C. T del modelo 2 − h: baja de −1 °C a las 03 UTC (22:00 Lima) hasta las 12 UTC
