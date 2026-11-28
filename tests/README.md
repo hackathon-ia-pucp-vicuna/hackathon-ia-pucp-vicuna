@@ -1,6 +1,8 @@
 # tests/ — Pruebas (pytest)
 
 ```bash
+pip install -r requirements-app.txt -r requirements-dev.txt
+ruff check .
 pytest -q
 ```
 
@@ -10,4 +12,4 @@ pytest -q
 - `test_telegram.py` (T18): aviso por Telegram sin red: 600 caracteres como máximo, sin duplicados por zona y noche, token desde variables de entorno, modo de prueba sin envío y errores sin el token.
 - `test_streamlit_app.py` (T17): la app de Streamlit de punta a punta con AppTest, sin red (pronóstico, relieve y modelo sintéticos): zona y cultivo, nivel, inicio y duración, tabla por hora con GFS crudo y modelo, caché y errores en español sin trazas. Con la data oficial y los pesos mide la carga con caché (< 5 s).
 - `test_confirmaciones.py` (T19): confirmaciones sí/no en SQLite: el formulario guarda zona, fecha y respuesta, una segunda respuesta reemplaza a la anterior sin duplicar y no se guardan datos personales.
-- En CI (T40), cada PR corre `pytest` y `ruff`.
+- En CI (T40, `.github/workflows/ci.yml`), cada PR y cada push a `main` y `develop` corre `ruff check .` y `pytest -q` con Python 3.12. La configuración de ruff está en `ruff.toml` (no revisa los notebooks de `train/`).

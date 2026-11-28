@@ -52,7 +52,7 @@ def completar_zonas(zonas, st):
 
 def _guardar(zonas, ruta=RUTA_ZONAS):
     texto = ruta.read_text(encoding="utf-8")
-    cabecera = "".join(l for l in texto.splitlines(keepends=True) if l.startswith("#"))
+    cabecera = "".join(linea for linea in texto.splitlines(keepends=True) if linea.startswith("#"))
     cuerpo = yaml.safe_dump(zonas, allow_unicode=True, sort_keys=False)
     ruta.write_text(cabecera + "\n" + cuerpo, encoding="utf-8")
 

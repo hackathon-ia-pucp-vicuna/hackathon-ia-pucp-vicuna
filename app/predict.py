@@ -58,7 +58,7 @@ def _exigir(ruta, que, como=""):
 def _ruta_en_models(nombre):
     """Ruta de un archivo del manifiesto, siempre dentro de models/: no se aceptan rutas absolutas ni con '..'."""
     rel = Path(nombre)
-    if rel.is_absolute() or rel.drive or ".." in rel.parts:
+    if rel.is_absolute() or rel.anchor or ".." in rel.parts:  # anchor: en Windows "/tmp/x" no es absoluta
         raise ModeloNoDisponible(f"El manifiesto del modelo nombra un archivo fuera de models/: {nombre}. "
                                  "Usa una ruta relativa a models/.")
     return RUTA_MODELOS / rel
