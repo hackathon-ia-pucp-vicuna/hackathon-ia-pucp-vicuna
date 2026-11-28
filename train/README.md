@@ -3,6 +3,7 @@
 | Archivo | Qué es |
 |---|---|
 | `starter_notebook.ipynb` | Starter oficial: CNN chica con relieve (score público de la línea base: 0.42782). |
+| `plantilla_experimento.ipynb` | Plantilla para un experimento: cada quien cambia una celda y la corre en su Kaggle (cortes A y B, 2 semillas). |
 | `submission_notebook.ipynb` | Notebook final reproducible: entrena el modelo y genera el `submission.csv` de la submission final (T29). |
 
 Reglas:
