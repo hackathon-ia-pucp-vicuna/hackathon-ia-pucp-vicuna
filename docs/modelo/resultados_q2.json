@@ -1,0 +1,126 @@
+{
+ "id": "Q2",
+ "autor": "eduquispeperez",
+ "hipotesis": "Predecir tambi\u00e9n el WRF de t-2 y t-1 (cabeza auxiliar) mejora la hora t",
+ "quick": false,
+ "usa_horas_futuras": false,
+ "semillas_criba": [
+  0,
+  1,
+  2
+ ],
+ "semillas": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "umbral_criba": 0.002,
+ "umbral": 0.003,
+ "cribado_base_A": {
+  "0": {
+   "score_oficial": 0.46223118617575176,
+   "score_local": 0.36085641384124756,
+   "rmse_3h": {
+    "RH": 9.602357864379883,
+    "T": 0.9029099941253662,
+    "U": 1.6179383993148804,
+    "V": 1.5259974002838135
+   }
+  },
+  "1": {
+   "score_oficial": 0.46397484495799723,
+   "score_local": 0.3630669116973877,
+   "rmse_3h": {
+    "RH": 9.534300804138184,
+    "T": 0.8993367552757263,
+    "U": 1.6099361181259155,
+    "V": 1.526890516281128
+   }
+  },
+  "2": {
+   "score_oficial": 0.46494961792347955,
+   "score_local": 0.3649059534072876,
+   "rmse_3h": {
+    "RH": 9.309894561767578,
+    "T": 0.9108126163482666,
+    "U": 1.6218039989471436,
+    "V": 1.516370415687561
+   }
+  }
+ },
+ "resultados": {
+  "base": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.1,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.0,
+    "aux": false,
+    "peso_aux": 0.5
+   }
+  },
+  "aux0.5": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.1,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.0,
+    "aux": true,
+    "peso_aux": 0.5
+   },
+   "criba_difs": [
+    -0.0020831512293337795,
+    0.0013099232326263532,
+    -0.003966318745762587
+   ],
+   "criba": -0.0015798489141566712,
+   "pasa_criba": false,
+   "aceptado": false
+  }
+ },
+ "aceptados": [],
+ "versiones": {
+  "python": "3.13.16",
+  "numpy": "2.1.3",
+  "torch": "2.11.0+cu130",
+  "equipo": "Tesla T4"
+ }
+}
