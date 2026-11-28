@@ -1,0 +1,10 @@
+# ruff (T40). Reglas por defecto (E4, E7, E9, F) sobre el código .py.
+target-version = "py312"
+
+# Los notebooks de train/ son el registro de experimentos (docs/modelo/experimentos.md):
+# no se reescriben por estilo. El venv local tampoco se revisa.
+extend-exclude = ["*.ipynb", ".venv*"]
+
+[lint]
+# El equipo usa varias sentencias cortas por línea en código numérico.
+ignore = ["E701", "E702"]

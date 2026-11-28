@@ -1,0 +1,4 @@
+# Pruebas y calidad (T40). Se instala junto con requirements-app.txt:
+#   pip install -r requirements-app.txt -r requirements-dev.txt
+pytest==8.3.4
+ruff==0.8.4

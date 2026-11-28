@@ -25,7 +25,6 @@ Cada descarga de la grilla completa cuenta como ~221 llamadas (una por punto).
 Regla de la hackathon: esta función es SOLO para el producto (datos actuales).
 No la uses para bajar más data de entrenamiento ni para la submission de Kaggle.
 """
-import json
 import os
 import time
 from datetime import datetime, timezone
