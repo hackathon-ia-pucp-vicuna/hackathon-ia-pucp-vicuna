@@ -188,7 +188,7 @@ DATA = RAIZ / "data"
                          and predict.RUTA_MANIFIESTO.exists() and (RAIZ / "models" / "estadisticas_ensamble.npz").exists()),
                     reason="sin la data oficial, los pesos o models/estadisticas_ensamble.npz")
 def test_con_caché_carga_en_menos_de_5_segundos(tmp_path, monkeypatch):
-    """Modelo real (10 miembros). El GFS sale de test.npz (sin red); se mide la recarga con la caché llena."""
+    """Modelo real (los miembros del manifiesto). El GFS sale de test.npz (sin red); se mide la recarga con la caché llena."""
     te = np.load(DATA / "test.npz")
     X, times = te["X"], te["times"].astype(str)
     noche = "20240710"

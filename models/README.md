@@ -7,4 +7,4 @@ Aquí van los **pesos de tu modelo final**: los mismos que generaron tu submissi
 
 Link a los pesos (solo si no están en esta carpeta): [pegar link]
 
-En este repo: `modelo.pt` (línea base, T03) y `ensamble/` con `modelo.json` (10 miembros del envío 58945688, 16.2 MB, T50). Detalle en `FICHA.md`.
+En este repo: `modelo.pt` (línea base, T03) y `ensamble/` con `modelo.json` (los 30 miembros del producto, envío 59028408, 71.7 MB, T50). Detalle en `FICHA.md`.

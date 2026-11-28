@@ -11,7 +11,8 @@ comprueba que dan la misma salida que la red del notebook):
   starter                  `Net` del starter (línea base, T03). Predice la anomalía sobre la climatología.
   residuo_crudo_profundo   red de T09/T20 (train/t09b_capacidad.ipynb): decodificador con bloques
                            residuales dilatados; corrige el GFS de la hora t interpolado a 3 km.
-                           No usa `clim_gfs`.
+                           No usa `clim_gfs`. Un miembro con cfg["arq"] = "unet" es la U-Net de
+                           train/t09h_diversidad.ipynb, con la misma entrada, salida y término base.
 
 Archivos que necesita (ninguno se genera desde aquí):
   models/modelo.json        manifiesto (T49). Las rutas van relativas a models/; la normalización de
@@ -126,7 +127,8 @@ def construir_red(st):
 def construir_red_residuo(st, cfg):
     """
     Red de T09/T20 (`Net` de train/t09b_capacidad.ipynb con profundo=True, sin skip, terreno ni
-    codificador profundo) con la grilla y el DEM de `st`. Pesos sin cargar. Mismas claves de
+    codificador profundo) con la grilla y el DEM de `st`. Con cfg["lead"] = "lineal", la de
+    train/t09d_lead.ipynb: un canal más de entrada con la hora desde el inicio del WRF (h/23). Pesos sin cargar. Mismas claves de
     state_dict que la red del notebook. El dropout no actúa al predecir.
     """
     import torch
@@ -140,6 +142,10 @@ def construir_red_residuo(st, cfg):
     distintas = {k: cfg.get(k) for k, v in soportada.items() if cfg.get(k) != v}
     if distintas:
         raise ModeloNoDisponible(f"La configuración del manifiesto no es la variante residuo_crudo_profundo: {distintas}.")
+    lead = cfg.get("lead", "ciclica")           # T20: hora desde el inicio del WRF (train/t09d_lead.ipynb)
+    if lead not in ("ciclica", "lineal"):
+        raise ModeloNoDisponible(f"La configuración del manifiesto no es la variante residuo_crudo_profundo: lead={lead!r}.")
+    nh = 2 if lead == "ciclica" else 3
     w, bloques, p = int(cfg["w"]), [int(d) for d in cfg["bloques"]], float(cfg.get("dropout", 0.0))
     grid, dem_n = _grilla_y_dem(st)
 
@@ -158,7 +164,7 @@ def construir_red_residuo(st, cfg):
 
         def __init__(self):
             super().__init__()
-            self.enc = nn.Sequential(nn.Conv2d(4 * 3 + 2, w, 3, padding=1), nn.GELU(),
+            self.enc = nn.Sequential(nn.Conv2d(4 * 3 + nh, w, 3, padding=1), nn.GELU(),
                                      nn.Conv2d(w, w, 3, padding=1), nn.GELU())
             self.static = nn.Parameter(torch.zeros(1, 8, 70, 35))
             self.dec = nn.Sequential(nn.Conv2d(w + 9, w, 3, padding=1), nn.GELU(),
@@ -174,12 +180,78 @@ def construir_red_residuo(st, cfg):
             B = x.shape[0]
             x = x.permute(0, 1, 4, 2, 3).reshape(B, -1, 17, 13)
             ang = 2 * np.pi * h / 24
-            hh = torch.stack([torch.sin(ang), torch.cos(ang)], 1)[..., None, None].expand(B, 2, 17, 13)
+            hh = torch.stack([torch.sin(ang), torch.cos(ang)], 1)
+            if lead == "lineal":                     # el WRF se reinicia a las 00 UTC: h/23 separa 23 de 00
+                hh = torch.cat([hh, (h / 23 * 2 - 1)[:, None]], 1)
+            hh = hh[..., None, None].expand(B, nh, 17, 13)
             f = self.interpolar(self.enc(torch.cat([x, hh], 1)))
             f = torch.cat([f, self.dem.expand(B, -1, -1, -1), self.static.expand(B, -1, -1, -1)], 1)
             return self.dec(f).permute(0, 2, 3, 1)  # (B,70,35,4) anomalía normalizada (sin el término base)
 
     return NetResiduo()
+
+
+def construir_red_unet(st, cfg):
+    """
+    U-Net a 3 km (`UNet` de train/t09h_diversidad.ipynb): GFS interpolado de las 3 horas, hora, DEM y
+    mapa estático. Misma entrada, salida y término base que la red residual. Pesos sin cargar.
+    """
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+
+    soportada = {"lags": 3, "residuo": "crudo"}
+    if "w" not in cfg or any(cfg.get(k) != v for k, v in soportada.items()):
+        raise ModeloNoDisponible("La configuración del manifiesto no es la U-Net de la variante residuo_crudo_profundo.")
+    w, p = int(cfg["w"]), float(cfg.get("dropout", 0.0))
+    grid, dem_n = _grilla_y_dem(st)
+
+    def par(a, b):
+        return nn.Sequential(nn.Conv2d(a, b, 3, padding=1), nn.GELU(), nn.Dropout2d(p),
+                             nn.Conv2d(b, b, 3, padding=1), nn.GELU())
+
+    def sube(a, ref):
+        return F.interpolate(a, size=ref.shape[-2:], mode="bilinear", align_corners=False)
+
+    class UNet(nn.Module):
+        """Copia de `UNet` del notebook; GRID y DEM pasan a buffers no persistentes."""
+
+        def __init__(self):
+            super().__init__()
+            self.static = nn.Parameter(torch.zeros(1, 8, 70, 35))
+            self.d1, self.d2, self.d3 = par(4 * 3 + 3 + 9, w), par(w, 2 * w), par(2 * w, 4 * w)
+            self.u2, self.u1 = par(4 * w + 2 * w, 2 * w), par(2 * w + w, w)
+            self.fin = nn.Conv2d(w, 4, 1)
+            self.register_buffer("grid", grid, persistent=False)
+            self.register_buffer("dem", dem_n, persistent=False)
+
+        def interpolar(self, a):
+            """(B,C,17,13) GFS -> (B,C,70,35) WRF, bilineal."""
+            return F.grid_sample(a, self.grid.expand(len(a), -1, -1, -1), align_corners=True)
+
+        def forward(self, x, h):                     # x: (B,3,17,13,4) normalizada, h: (B,) hora UTC
+            B = x.shape[0]
+            g = self.interpolar(x.permute(0, 1, 4, 2, 3).reshape(B, -1, 17, 13))
+            ang = 2 * np.pi * h / 24
+            hh = torch.stack([torch.sin(ang), torch.cos(ang), h / 23 * 2 - 1], 1)[..., None, None].expand(B, 3, 70, 35)
+            e1 = self.d1(torch.cat([g, hh, self.dem.expand(B, -1, -1, -1), self.static.expand(B, -1, -1, -1)], 1))
+            e2 = self.d2(F.avg_pool2d(e1, 2, ceil_mode=True))
+            e3 = self.d3(F.avg_pool2d(e2, 2, ceil_mode=True))
+            d = self.u2(torch.cat([sube(e3, e2), e2], 1))
+            d = self.u1(torch.cat([sube(d, e1), e1], 1))
+            return self.fin(d).permute(0, 2, 3, 1)  # (B,70,35,4) anomalía normalizada (sin el término base)
+
+    return UNet()
+
+
+def construir_red_miembro(st, cfg):
+    """Red de un miembro de la variante residuo_crudo_profundo según cfg["arq"] (sin campo: la red residual)."""
+    arq = cfg.get("arq", "residual")
+    if arq == "unet":
+        return construir_red_unet(st, cfg)
+    if arq == "residual":
+        return construir_red_residuo(st, cfg)
+    raise ModeloNoDisponible(f"Arquitectura desconocida en el manifiesto del modelo: arq={arq!r}.")
 
 
 def leer_manifiesto(ruta=None):
@@ -260,7 +332,7 @@ def _cargar():
         if m["variante"] == "starter":
             red = construir_red(st)
         else:
-            red = construir_red_residuo(st, m["configuraciones"][x["configuracion"]])
+            red = construir_red_miembro(st, m["configuraciones"][x["configuracion"]])
         red.load_state_dict(torch.load(ruta, map_location="cpu", weights_only=True))
         red.eval()
         modelos.append(red)
