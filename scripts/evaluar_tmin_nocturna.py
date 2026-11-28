@@ -8,8 +8,12 @@ las que evalúa Kaggle y usa el aviso) y se compara con la del WRF.
 GFS interpolado: bilineal de la grilla 17×13 a la de 3 km con las coordenadas reales (lo mismo que hace
 `grid_sample` en la red), sin corrección por altura.
 
-Uso (desde la raíz, con data/train.npz, data/static.npz, models/modelo.pt y models/estadisticas.npz):
+Uso (desde la raíz, con data/train.npz, data/static.npz y los pesos y estadísticas de models/):
     python scripts/evaluar_tmin_nocturna.py
+
+OJO: los resultados de docs/datos/tmin-nocturna.md son de la línea base (commit 6823f, antes de T49).
+Desde T49, predecir() usa el ensamble del envío 58945688, entrenado con TODO train.npz (también la
+validación): con esos pesos el script no es una validación y sus cifras salen optimistas.
 """
 import sys
 from pathlib import Path
