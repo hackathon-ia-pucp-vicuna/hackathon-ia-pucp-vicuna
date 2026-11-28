@@ -58,7 +58,7 @@ Open-Meteo (GFS) → gfs_forecast.py (caché) → ventanas t-2,t-1,t → predict
 ```
 - **Aislamiento:** el código de entrenamiento no importa nada de `app/`. `app/` usa el modelo **solo** por `predecir()`.
 - **Paridad:** el notebook de entrenamiento es autocontenido (define la red en línea) y `app/predict.py` tiene una copia de la red. `tests/test_paridad.py` carga los pesos guardados y comprueba que ambas dan la misma salida sobre una muestra fija.
-- **Hora local:** la noche de helada en Lima (19:00–07:00) corresponde a 00, 03, 06, 09 y 12 UTC.
+- **Hora local:** la noche de helada en el producto va de 20:00 a 07:00 en Lima = 01–12 UTC (todas las horas; la 00 UTC se excluye, ver `spec.md`, decisión 5).
 - **Reglas por cultivo:** `thresholds.yaml` exige el campo `fuente` (SENAMHI/INIA u otra) y `validado: true|false`. Sin fuente, solo se muestra la referencia general de 0 °C, rotulada como tal.
 - **Honestidad del modelo:** no predice lluvia, nubosidad, radiación ni ráfagas. La helada se estima con T, HR y viento; el mensaje declara la incertidumbre.
 

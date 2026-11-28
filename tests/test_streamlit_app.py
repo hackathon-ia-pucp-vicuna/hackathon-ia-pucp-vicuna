@@ -33,7 +33,7 @@ from frost import comparar, rules  # noqa: E402
 from test_paridad import static_sintetico  # noqa: E402
 
 APP = str(RAIZ / "app" / "web" / "streamlit_app.py")
-NOCHE = "20260701"                               # noche fija: horas 00–12 UTC del 1 jul
+NOCHE = "20260701"                               # noche fija: horas 01–12 UTC del 1 jul
 K = 273.15
 T_GFS_C = 5.0                                    # GFS crudo constante: 5 °C en toda la grilla
 
@@ -104,8 +104,8 @@ def test_tabla_por_hora_y_tmin_del_gfs_crudo_y_del_modelo(app):
     assert m["Diferencia"] == "-15.0 °C"
     tabla = at.dataframe[0].value
     assert list(tabla.columns) == ["Hora (Lima)", "Modelo (°C)", "GFS crudo (°C)", "Diferencia (°C)", "Bajo -1 °C"]
-    assert len(tabla) == 13                                       # 00–12 UTC = 19:00–07:00 Lima
-    assert tabla["Hora (Lima)"].iloc[0] == "30/06 19:00"
+    assert len(tabla) == 12                                       # 01–12 UTC = 20:00–07:00 Lima
+    assert tabla["Hora (Lima)"].iloc[0] == "30/06 20:00"
     assert (tabla["GFS crudo (°C)"] == T_GFS_C).all()
     assert tabla["Bajo -1 °C"].tolist().count("sí") == 10
 

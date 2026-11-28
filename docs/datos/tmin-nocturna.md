@@ -6,7 +6,7 @@
 
 ## Método
 - **Data:** validación temporal de `train.npz` (16–30 jun 2024). El 22 jun no tiene datos, así que quedan **14 noches** y todas están completas. Nunca se usó para entrenar: los pesos (`models/modelo.pt`, línea base T03) se entrenaron hasta el 15 jun. Solo se eligió la mejor época con esta validación, lo que puede favorecer un poco al modelo.
-- **Noche:** 19:00–07:00 en Lima, que corresponde a 00–12 UTC. Para cada noche y celda se toma la T mínima de dos formas: con las 13 horas, y con solo las horas 00, 03, 06, 09 y 12 UTC, que son las que evalúa Kaggle y las que usa el aviso.
+- **Noche (la de este análisis; desde el 28 nov el producto usa 01–12 UTC y estas tablas no se han recalculado):** 19:00–07:00 en Lima, que corresponde a 00–12 UTC. Para cada noche y celda se toma la T mínima de dos formas: con las 13 horas, y con solo las horas 00, 03, 06, 09 y 12 UTC, que son las que evalúa Kaggle y las que usa el aviso.
 - **Fuentes:** la referencia es el WRF (Y). El modelo se corre con `predecir()` sobre ventanas t-2, t-1, t (`train/ventanas.py`). El GFS interpolado es una interpolación bilineal de la grilla 17×13 a la de 3 km con las coordenadas reales, sin corregir por altura.
 - **Ámbitos:** toda la grilla (2,450 celdas), las celdas a 4,000 m o menos según el DEM (1,447 celdas, tope aproximado de la papa) y las 3 localidades de `app/frost/zones.yaml`.
 - **Para reproducir:** `python scripts/evaluar_tmin_nocturna.py` en el commit `6823f` (antes de T49), con `data/` y `models/estadisticas.npz`. Desde T49, `predecir()` carga el ensamble final, entrenado también con estas noches, y el script deja de ser una validación (ver la última sección).

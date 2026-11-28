@@ -22,7 +22,7 @@ Skill de trabajo para el repo del concurso. Si el repo tiene su propio `CLAUDE.m
 - Filtro previo: 4 entregables a tiempo, score privado mayor que 0, el producto usa tu modelo, repo y video accesibles.
 - Equipo: Vicuña (idéntico en Luma y Kaggle, con la "ñ").
 - Meta interna de entrega: sábado 5 dic (2–3 días antes del cierre). Vie 4 dic: video, prueba en máquina limpia y última submission. 6–7 dic: colchón solo para errores graves.
-- Producto elegido: **Helada Andina** (alertas de helada para agricultores y técnicos agrarios del Callejón de Huaylas; papa primero). Salida: nivel de riesgo, hora de inicio, duración, recomendación y comparación "GFS crudo vs nuestro modelo". Ventana nocturna 19:00–07:00 Lima (00, 03, 06, 09, 12 UTC). Umbrales en `thresholds.yaml` con `fuente` y `validado`; sin fuente, solo referencia de 0 °C.
+- Producto elegido: **Helada Andina** (alertas de helada para agricultores y técnicos agrarios del Callejón de Huaylas; papa primero). Salida: nivel de riesgo, hora de inicio, duración, recomendación y comparación "GFS crudo vs nuestro modelo". Ventana nocturna 20:00–07:00 Lima (01–12 UTC; se excluye la 00 UTC). Umbrales en `thresholds.yaml` con `fuente` y `validado`; sin fuente, solo referencia de 0 °C.
 - Especificación y tareas: `specs/001-producto/` (`spec.md`, `plan.md`, `tasks.md`, T01–T50). Tablero: GitHub Project "Vicuña · Hackathon IA PUCP" (Kanban To do / In progress / Done, 3 sprints).
 
 ## Reglas que descalifican (nunca romperlas)
