@@ -1,0 +1,224 @@
+{
+ "id": "Q1",
+ "autor": "eduquispeperez",
+ "hipotesis": "M\u00e1s regularizaci\u00f3n (dropout o ruido en la entrada) mejora",
+ "quick": false,
+ "usa_horas_futuras": false,
+ "semillas_criba": [
+  0,
+  1,
+  2
+ ],
+ "semillas": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "umbral_criba": 0.002,
+ "umbral": 0.003,
+ "cribado_base_A": {
+  "0": {
+   "score_oficial": 0.4621465818925802,
+   "score_local": 0.36079585552215576,
+   "rmse_3h": {
+    "RH": 9.603401184082031,
+    "T": 0.9033446311950684,
+    "U": 1.6180615425109863,
+    "V": 1.5260826349258423
+   }
+  },
+  "1": {
+   "score_oficial": 0.46357143057437344,
+   "score_local": 0.3629415035247803,
+   "rmse_3h": {
+    "RH": 9.546774864196777,
+    "T": 0.9016723036766052,
+    "U": 1.610100507736206,
+    "V": 1.5267432928085327
+   }
+  },
+  "2": {
+   "score_oficial": 0.4649496806327601,
+   "score_local": 0.3649060130119324,
+   "rmse_3h": {
+    "RH": 9.309892654418945,
+    "T": 0.9108124375343323,
+    "U": 1.6218037605285645,
+    "V": 1.516370415687561
+   }
+  }
+ },
+ "resultados": {
+  "base": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.1,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.0
+   }
+  },
+  "drop0.2": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.2,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.0
+   },
+   "criba_difs": [
+    0.0010233681643859738,
+    0.0021989544188953936,
+    0.001016871763921512
+   ],
+   "criba": 0.0014130647824009597,
+   "pasa_criba": false,
+   "aceptado": false
+  },
+  "drop0.3": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.3,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.0
+   },
+   "criba_difs": [
+    0.0024405709812159726,
+    -0.0019525305058473164,
+    0.0009677973050944422
+   ],
+   "criba": 0.0004852792601543661,
+   "pasa_criba": false,
+   "aceptado": false
+  },
+  "ruido0.05": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.1,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.05
+   },
+   "criba_difs": [
+    0.0007006446110360276,
+    -0.00045884702031728786,
+    -0.0028841012451111814
+   ],
+   "criba": -0.0008807678847974806,
+   "pasa_criba": false,
+   "aceptado": false
+  },
+  "ruido0.10": {
+   "cfg": {
+    "w": 64,
+    "bloques": [
+     1,
+     2,
+     4,
+     1
+    ],
+    "enc_prof": false,
+    "dropout": 0.1,
+    "wd": 0.0001,
+    "lags": 3,
+    "skip": false,
+    "residuo": "crudo",
+    "terreno": false,
+    "profundo": true,
+    "peso_mj": 1,
+    "epocas": 25,
+    "lr": 0.002,
+    "lote": 32,
+    "entradas": "gfs",
+    "arq": "base",
+    "ruido": 0.1
+   },
+   "criba_difs": [
+    0.00018158290981884484,
+    0.001403708360730005,
+    -0.0039963216553559056
+   ],
+   "criba": -0.0008036767949356852,
+   "pasa_criba": false,
+   "aceptado": false
+  }
+ },
+ "aceptados": [],
+ "versiones": {
+  "python": "3.13.16",
+  "numpy": "2.1.3",
+  "torch": "2.11.0+cu130",
+  "equipo": "Tesla T4"
+ }
+}

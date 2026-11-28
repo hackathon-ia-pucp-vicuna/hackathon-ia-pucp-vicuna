@@ -12,16 +12,14 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
-
 APP = Path(__file__).resolve().parent
 if str(APP) not in sys.path:
     sys.path.insert(0, str(APP))
 
 from frost.advice import mensaje  # noqa: E402
 from frost.rules import (a_hora_lima, cargar_yaml, celda_de_zona, evaluar_noche,  # noqa: E402
-                         horas_de_la_noche, noche_objetivo, umbral_de_cultivo)
-import gfs_forecast  # noqa: E402
+                         noche_objetivo, umbral_de_cultivo)
+from entrada_gfs import advertencia_horas_faltantes, ventanas_de_la_noche  # noqa: E402
 import predict  # noqa: E402
 from pronostico import obtener_pronostico  # noqa: E402
 
@@ -67,12 +65,11 @@ def calcular_avisos(noche=None, cultivo="papa", claves=None):
     claves = list(zonas) if claves is None else list(claves)
     umbral = umbral_de_cultivo(cultivo)
     X, times, advertencia = obtener_pronostico(CACHE_GFS, CACHE_HORAS)
-    Xw, _ = gfs_forecast.make_windows(X, times)
-    m = horas_de_la_noche(times, noche)
-    if not m.any():
+    Xw, t_noche, _, faltan = ventanas_de_la_noche(X, times, noche)
+    if not len(t_noche):
         raise NocheNoCubierta("El pronóstico disponible no cubre la noche pedida.")
-    t_noche = np.asarray(times)[m].astype(str)
-    Y = predict.predecir(Xw[m], [int(t[8:10]) for t in t_noche])
+    Y = predict.predecir(Xw, [int(t[8:10]) for t in t_noche])
+    aviso_horas = advertencia_horas_faltantes(faltan)
     st = predict.cargar_static()
     avisos = []
     for clave in claves:
@@ -80,6 +77,7 @@ def calcular_avisos(noche=None, cultivo="papa", claves=None):
         fila, col = celda_de_zona(zona["lat"], zona["lon"], st["wrf_lats"], st["wrf_lons"])
         r = evaluar_noche(Y[:, fila, col, 1] - 273.15, t_noche, umbral)
         avisos.append({"clave": clave, "zona": zona["nombre"], "noche": noche, "cultivo": umbral.get("nombre", cultivo),
-                       "umbral": umbral, "resultado": r, "mensaje": mensaje(r["nivel"], r, zona["nombre"]),
+                       "umbral": umbral, "resultado": r,
+                       "mensaje": " ".join(filter(None, (mensaje(r["nivel"], r, zona["nombre"]), aviso_horas))),
                        "inicio_noche": a_hora_lima(f"{noche}00"), "advertencia": advertencia})
     return avisos

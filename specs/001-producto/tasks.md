@@ -172,7 +172,7 @@ Criterios de aceptación:
 HU: HU-09 · Responsable: @johancg04 · Verifica: @DuDu-0912
 Fecha: 28 nov. Depende de: T49.
 Criterios de aceptación:
-- [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (es el envío 58945688, la mezcla de 10 modelos); es una media simple de miembros de una variante que `predecir()` soporta.
+- [ ] Antes de publicar, `experimentos.md` anota la referencia de Kaggle del envío que usará el producto (es el envío 59028408, la mezcla de 30 modelos; antes fueron 58945688 y 58975363); es una media simple de miembros de una variante que `predecir()` soporta.
 - [ ] Todos los `.pt` de ese envío están en `models/` y sus SHA-256 coinciden con la salida de Kaggle del notebook que lo generó.
 - [ ] El script genera las estadísticas con todos los datos, iguales a las del entrenamiento (tolerancia relativa 1e-5); `clim` y `clim_gfs` no van al repo, y `generar_estadisticas.py` no calcula `clim_gfs` porque ninguna variante soportada la usa.
 - [ ] La paridad entre el notebook que generó el envío y la app pasa con todos sus pesos (diferencia < 1e-5 en 5 muestras).

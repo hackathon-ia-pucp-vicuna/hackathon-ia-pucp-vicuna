@@ -5,7 +5,7 @@ predecir() con ensamble de miembros declarado en models/modelo.json (T49 · HU-0
   falta uno, si su SHA-256 no coincide o si las estadísticas no coinciden con la normalización de referencia.
 - La salida es la media de los miembros, cada uno con la HR recortada a 0–100 (1 y 5 miembros sintéticos,
   en las dos variantes).
-- Con la data oficial: los 10 pesos del envío 58945688 reproducen, con predecir(), la muestra fija del CSV
+- Con la data oficial: los 30 pesos del envío del producto (mezcla de 30, público 0.50332) reproducen, con predecir(), la muestra fija del CSV
   enviado (2,400 filas, 24 horas de test) y se mide el tiempo de 24 horas en CPU.
 
 Se ejecuta con:  pytest -q -s tests/test_predecir_ensamble.py
@@ -29,7 +29,7 @@ import predict  # noqa: E402
 from test_paridad import CFG_RESIDUO, celda_red_residuo, entrada_tipica, escribir_manifiesto, preparar_modelo  # noqa: E402
 
 DATA = RAIZ / "data"
-MUESTRA = RAIZ / "tests" / "fixtures" / "envio_58945688_muestra.json"
+MUESTRA = RAIZ / "tests" / "fixtures" / "envio_mezcla30_muestra.json"
 TOLERANCIA = 1e-5
 TOLERANCIA_ENVIO = 1e-3          # la GPU no es determinista y el CSV está redondeado a 3 decimales
 
@@ -182,8 +182,8 @@ def test_predecir_reproduce_la_muestra_del_envio(tmp_path, monkeypatch):
     from ventanas import armar_ventanas
 
     m = predict.leer_manifiesto()
-    assert m["envio_kaggle"] == 58945688
-    # La carpeta temporal hace de models/: el manifiesto real sin cambios, copia de los 10 pesos y
+    assert m["envio"]["publico"] == 0.50332
+    # La carpeta temporal hace de models/: el manifiesto real sin cambios, copia de los 30 pesos y
     # estadísticas generadas con --ensamble (su clim también se comprueba, con clim_media)
     assert len(m["normalizacion"].get("clim_media", [])) == 4
     shutil.copytree(RAIZ / "models" / "ensamble", tmp_path / "ensamble")

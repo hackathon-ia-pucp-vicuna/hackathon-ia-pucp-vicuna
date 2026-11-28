@@ -2,9 +2,40 @@
 
 Equipo Vicuña · Hackathon IA PUCP 2026. Reducción de escala espacial: del GFS (~27 km) a lo que daría WRF (3 km) en la Cordillera Blanca.
 
-## Ensamble del envío 58945688 (T50, modelo del producto)
+## Producto desde el 28 nov: mezcla de 30 (envío 0.50332)
 
-**Envío del producto:** ref. 58945688, público **0.49702** (26 nov). Es la media simple de 10 miembros, cada uno con la HR recortada a 0–100 %. Desde T49, `app/predict.predecir()` carga los miembros que lista `modelo.json`; la línea base de abajo queda como referencia.
+`models/modelo.json` lista **30 miembros**, 5 semillas de cada configuración. La salida es su media simple, cada uno con la HR recortada a 0–100 %.
+
+| Archivos en `ensamble/` | Configuración | Origen |
+|---|---|---|
+| `r1_s*`, `r2_s*` | ronda 1, y la misma con dropout 0.1 | `train/t09b_capacidad.ipynb` |
+| `lead_s*` | r2 más la hora desde el inicio del WRF (h/23) | `train/t09d_lead.ipynb` |
+| `ancho96_s*` | `lead` con ancho 96 | `train/t09h_diversidad.ipynb` |
+| `ep40_s*` | `lead` con 40 épocas | `train/t09h_diversidad.ipynb` |
+| `unet_s*` | U-Net de ancho 48 a 3 km, con el GFS interpolado | `train/t09h_diversidad.ipynb` |
+
+- **Envío:** `submission_mezcla30.csv`, 27 nov, público **0.50332**. Referencia de Kaggle: **59028408**.
+- **Validación de la mezcla de 30** (corte temporal): A **0.49151**, B **0.49631** (mezcla de 15: 0.48808 y 0.48981). Los pesos publicados se reentrenaron con todos los datos: no tienen validación propia.
+- **Normalización:** la misma de antes (todas las horas); `estadisticas_ensamble.npz` no cambia (diferencia 0.0 frente a las de `ancho96` y `ep40`).
+- **Tamaño:** **71.7 MB** los 30 (71,665,680 bytes); la mezcla de 15 pesaba 24.3 MB.
+- **Reproducción con `predecir()`** (28 nov, Docker, torch 2.5.1+cpu): las **646,800 filas** del CSV enviado, diferencia máxima RH 0.00095, T 0.00099, U 0.00094, V 0.00096 (el CSV es la media de seis CSV redondeados a 3 decimales). Paridad app/notebook con los 30 pesos: diferencia 0.0.
+- **Tiempo de 24 h en CPU** (28 nov, Intel i9-9880H, Docker, equipo en reposo): limitado a 2 CPU, **9.8 s** con 30 miembros frente a 4.5 s con 15 (una medición cada uno); con 4 hilos, **9.5 s** (mediana de 3, entre 6.9 y 12.1) frente a 2.9 s. Pico de memoria del proceso: unos 530 MB. Con el equipo cargado o frenado por temperatura se midieron de 32 a 90 s. Falta medirlo en el servidor final (T47).
+- **App** (Streamlit, `AppTest`, Open-Meteo en vivo): primera carga 11.6 s, 0 excepciones y 0 errores en las tres localidades; con la caché llena, menos de 0.1 s.
+
+## Mezcla de 15 (envío 0.49888, producto del 26 al 28 nov; historial)
+
+`models/modelo.json` lista **15 miembros**: los 10 del envío 58945688 (r1 y r2, abajo) y 5 de la configuración `lead` (`ensamble/lead_s0.pt` … `lead_s4.pt`): r2 más la hora desde el inicio del WRF como entrada (h/23), de `train/t09d_lead.ipynb`, Kaggle `johancg04/vicuna-t09d-lead` v1. El WRF de la competencia se reinicia cada día a las 00 UTC desde el GFS (ver `docs/modelo/experimentos.md`).
+
+- **Envío:** `submission_mezcla15_lead.zip`, 26 nov, público **0.49888**. Referencia de Kaggle: **58975363**.
+- **Validación de la mezcla de 15** (corte temporal, 5 semillas por configuración): A **0.48809**, B **0.48979** (mezcla de 10: 0.48627 y 0.48673). Los pesos publicados se reentrenaron con todos los datos: no tienen validación propia.
+- **Normalización:** la misma de los 10 (todas las horas); `estadisticas_ensamble.npz` no cambia.
+- **Tamaño:** 10 × 1,617,306 + 5 × 1,621,425 bytes = **24.3 MB** (los de `lead` tienen 1,621,425 bytes: un canal más de entrada).
+- **Reproducción con `predecir()`** (Docker, torch 2.5.1+cpu): las **646,800 filas** del CSV enviado, diferencia máxima RH 0.00082, T 0.00086, U 0.00083, V 0.00083 (el CSV es la media de tres CSV redondeados a 3 decimales). Paridad app/notebook con los 15 pesos: diferencia 0.0.
+- **Tiempo de 24 h en CPU** (Intel i9-9880H, Docker, mediana de 5): **3.9 s** con 4 hilos; **5.9 s** limitado a 2 CPU. Las 792 h de test: 131 s.
+
+## Ensamble del envío 58945688 (mezcla de 10; historial)
+
+**Envío:** ref. 58945688, público **0.49702** (26 nov). Es la media simple de 10 miembros, cada uno con la HR recortada a 0–100 %. Sus 10 miembros siguen dentro de la mezcla de 30.
 
 | Archivo | Contenido |
 |---|---|

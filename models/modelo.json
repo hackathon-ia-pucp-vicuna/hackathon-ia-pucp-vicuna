@@ -1,8 +1,16 @@
 {
- "descripcion": "Ensamble del envío 58945688 (público 0.49702): media simple de 10 miembros, cada uno con la HR recortada a 0–100. Pesos entrenados con todos los datos de train.npz: no tienen validación propia.",
- "envio_kaggle": 58945688,
- "notebook": "train/t09b_capacidad.ipynb",
- "kernel_kaggle": "johancg04/vicuna-t09b-capacidad v2",
+ "descripcion": "Ensamble del envío submission_mezcla30.csv (27 nov 2026, público 0.50332): media simple de 30 miembros (r1, r2, lead, ancho96, ep40 y unet, 5 semillas cada uno), cada uno con la HR recortada a 0–100. Pesos entrenados con todos los datos de train.npz: no tienen validación propia; la mezcla valida 0.49151 (A) y 0.49631 (B).",
+ "envio_kaggle": 59028408,
+ "notebook": [
+  "train/t09b_capacidad.ipynb (r1, r2)",
+  "train/t09d_lead.ipynb (lead)",
+  "train/t09h_diversidad.ipynb (ancho96, ep40, unet)"
+ ],
+ "kernel_kaggle": [
+  "johancg04/vicuna-t09b-capacidad v2",
+  "johancg04/vicuna-t09d-lead v1",
+  "johancg04/vicuna-t09h-diversidad v1"
+ ],
  "variante": "residuo_crudo_profundo",
  "estadisticas": "estadisticas_ensamble.npz",
  "configuraciones": {
@@ -43,6 +51,87 @@
    "profundo": true,
    "peso_mj": 1,
    "epocas": 25
+  },
+  "lead": {
+   "w": 64,
+   "bloques": [
+    1,
+    2,
+    4,
+    1
+   ],
+   "enc_prof": false,
+   "dropout": 0.1,
+   "wd": 0.0001,
+   "lags": 3,
+   "skip": false,
+   "residuo": "crudo",
+   "terreno": false,
+   "profundo": true,
+   "peso_mj": 1,
+   "epocas": 25,
+   "lead": "lineal"
+  },
+  "ancho96": {
+   "w": 96,
+   "bloques": [
+    1,
+    2,
+    4,
+    1
+   ],
+   "enc_prof": false,
+   "dropout": 0.1,
+   "wd": 0.0001,
+   "lags": 3,
+   "skip": false,
+   "residuo": "crudo",
+   "terreno": false,
+   "profundo": true,
+   "peso_mj": 1,
+   "epocas": 25,
+   "lead": "lineal"
+  },
+  "ep40": {
+   "w": 64,
+   "bloques": [
+    1,
+    2,
+    4,
+    1
+   ],
+   "enc_prof": false,
+   "dropout": 0.1,
+   "wd": 0.0001,
+   "lags": 3,
+   "skip": false,
+   "residuo": "crudo",
+   "terreno": false,
+   "profundo": true,
+   "peso_mj": 1,
+   "epocas": 40,
+   "lead": "lineal"
+  },
+  "unet": {
+   "w": 48,
+   "bloques": [
+    1,
+    2,
+    4,
+    1
+   ],
+   "enc_prof": false,
+   "dropout": 0.1,
+   "wd": 0.0001,
+   "lags": 3,
+   "skip": false,
+   "residuo": "crudo",
+   "terreno": false,
+   "profundo": true,
+   "peso_mj": 1,
+   "epocas": 25,
+   "lead": "lineal",
+   "arq": "unet"
   }
  },
  "normalizacion": {
@@ -132,6 +221,133 @@
    "sha256": "e26ea285e70d87c7a06f6560fd8ac161071cadec12b0e26736c1386ac84c0337",
    "configuracion": "r2",
    "semilla": 4
+  },
+  {
+   "archivo": "ensamble/lead_s0.pt",
+   "sha256": "569fef521232f8ac9b2b3311603ad2cd7d72b6b41dc3268f2f2c4befb54f39f9",
+   "configuracion": "lead",
+   "semilla": 0
+  },
+  {
+   "archivo": "ensamble/lead_s1.pt",
+   "sha256": "4f925151475ff3261c9b74889fa984eb8803a3fab1e7e6a1447755443c149f11",
+   "configuracion": "lead",
+   "semilla": 1
+  },
+  {
+   "archivo": "ensamble/lead_s2.pt",
+   "sha256": "d9267cf37e24527189273fcd421c1a912876b3ed43b32245f7d8eb7a92ac8865",
+   "configuracion": "lead",
+   "semilla": 2
+  },
+  {
+   "archivo": "ensamble/lead_s3.pt",
+   "sha256": "710c01cb64d15d0f9183d9eab25be18fd2bf67b1e88d61d7fe10090dd8e00c84",
+   "configuracion": "lead",
+   "semilla": 3
+  },
+  {
+   "archivo": "ensamble/lead_s4.pt",
+   "sha256": "ca41a4406ee3569e3ac58a0656c5f0ba8dae1fd8f2542c52c7f18c86cf4bbc65",
+   "configuracion": "lead",
+   "semilla": 4
+  },
+  {
+   "archivo": "ensamble/ancho96_s0.pt",
+   "sha256": "e64c17623c59f670a97c006217e2e7c62a497784668e3ff2a2ba2c08b9d3e447",
+   "configuracion": "ancho96",
+   "semilla": 0
+  },
+  {
+   "archivo": "ensamble/ancho96_s1.pt",
+   "sha256": "b7d4e5410b7ecfa8eb5257d7175aae6b8710dff72dbeaa1025c83d883de2c64a",
+   "configuracion": "ancho96",
+   "semilla": 1
+  },
+  {
+   "archivo": "ensamble/ancho96_s2.pt",
+   "sha256": "ebcd4c8f534172b8f68bc75d61704f1bbe30da1bf79a21a78c67330907dd942c",
+   "configuracion": "ancho96",
+   "semilla": 2
+  },
+  {
+   "archivo": "ensamble/ancho96_s3.pt",
+   "sha256": "9d08f931a807c896593be60f80285050e06428c75e6c7eff314e699b5929ff3c",
+   "configuracion": "ancho96",
+   "semilla": 3
+  },
+  {
+   "archivo": "ensamble/ancho96_s4.pt",
+   "sha256": "c22f89a154d8aaf4f9fadee6d7e1bfdee30b3b4a3a7e40de3cc34b4a64c50a1c",
+   "configuracion": "ancho96",
+   "semilla": 4
+  },
+  {
+   "archivo": "ensamble/ep40_s0.pt",
+   "sha256": "e6b4a05af89577387fc0c215f34171bd3d8b613b9c4fa9f9e3a39f0345f37f5f",
+   "configuracion": "ep40",
+   "semilla": 0
+  },
+  {
+   "archivo": "ensamble/ep40_s1.pt",
+   "sha256": "8f0576f288ace2154cdf9febaf93cf1593069c5c287181e18dc666407e5b1f98",
+   "configuracion": "ep40",
+   "semilla": 1
+  },
+  {
+   "archivo": "ensamble/ep40_s2.pt",
+   "sha256": "4cad9d9fa941c3d94b2b45764edc227739fb3c86f35cada721636e40fbe169f1",
+   "configuracion": "ep40",
+   "semilla": 2
+  },
+  {
+   "archivo": "ensamble/ep40_s3.pt",
+   "sha256": "1d321c52bddf1e86adb20c5d1011f28aa9114f51c6cc84ed6b814e5bb733136d",
+   "configuracion": "ep40",
+   "semilla": 3
+  },
+  {
+   "archivo": "ensamble/ep40_s4.pt",
+   "sha256": "0a8e87eef7b2239b9abe095f54af47642d8baabaef790eb5e7b0494545ce54b1",
+   "configuracion": "ep40",
+   "semilla": 4
+  },
+  {
+   "archivo": "ensamble/unet_s0.pt",
+   "sha256": "ae6d8c5412bd468fcb4c689a9eca96eaa86873aab99d47fb53e4a6989b624859",
+   "configuracion": "unet",
+   "semilla": 0
+  },
+  {
+   "archivo": "ensamble/unet_s1.pt",
+   "sha256": "1114873232b1f37330f72d57a601ea42ca22f98c64e73d79093dfa21393d170d",
+   "configuracion": "unet",
+   "semilla": 1
+  },
+  {
+   "archivo": "ensamble/unet_s2.pt",
+   "sha256": "f8e0c7b80582506dd1e42361dcd01643b1093ba8e8459b6f3e977de880ed46a7",
+   "configuracion": "unet",
+   "semilla": 2
+  },
+  {
+   "archivo": "ensamble/unet_s3.pt",
+   "sha256": "f07634a30beae3a808af265fa752b4079329dfc727a8126d5744cfdf91f18e62",
+   "configuracion": "unet",
+   "semilla": 3
+  },
+  {
+   "archivo": "ensamble/unet_s4.pt",
+   "sha256": "04655a00c4f2c181f2d4b1d3e5394b6380fe65b1ba620198eb89671e8f67efc0",
+   "configuracion": "unet",
+   "semilla": 4
   }
- ]
+ ],
+ "envio": {
+  "archivo": "submission_mezcla30.csv",
+  "publico": 0.50332,
+  "fecha": "2026-11-27",
+  "nota": "Referencia tomada de `kaggle competitions submissions`.",
+  "anterior": 58975363
+ }
 }

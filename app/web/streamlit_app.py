@@ -33,10 +33,9 @@ sys.path.insert(0, str(APP))
 
 from frost.advice import AVISO_LIMITES, mensaje  # noqa: E402
 from frost.comparar import t_gfs_crudo_c  # noqa: E402
+from entrada_gfs import advertencia_horas_faltantes, ventanas_de_la_noche  # noqa: E402
 from frost.rules import (LIMA, UmbralInvalido, ZonaFueraDeGrilla, a_hora_lima, cargar_yaml,  # noqa: E402
-                         celda_de_zona, evaluar_noche, horas_de_la_noche, noche_objetivo,
-                         umbral_de_cultivo)
-from gfs_forecast import make_windows  # noqa: E402
+                         celda_de_zona, evaluar_noche, noche_objetivo, umbral_de_cultivo)
 from predict import ModeloNoDisponible, cargar_static, predecir  # noqa: E402
 from pronostico import SinPronostico, obtener_pronostico  # noqa: E402
 from storage import ConfirmacionInvalida, guardar_confirmacion  # noqa: E402
@@ -62,14 +61,13 @@ def calcular_noche(noche):
     Devuelve horas UTC, T del modelo y T del GFS crudo en °C (H,70,35) y el aviso de caché vieja.
     """
     X, times, aviso = obtener_pronostico(CACHE_GFS, CACHE_HORAS)
-    Xw, _ = make_windows(X, times)
-    m = horas_de_la_noche(times, noche)
-    if not m.any():
+    Xw, t_noche, X_t, faltan = ventanas_de_la_noche(X, times, noche)
+    if not len(t_noche):
         raise NocheNoCubierta(MSJ_NOCHE_FUERA)
-    t_noche = np.asarray(times)[m].astype(str)
-    Y = predecir(Xw[m], [int(t[8:10]) for t in t_noche])
+    Y = predecir(Xw, [int(t[8:10]) for t in t_noche])
     return {"times": t_noche, "t_modelo": Y[..., 1] - 273.15,
-            "t_gfs": t_gfs_crudo_c(np.asarray(X)[m], cargar_static()), "aviso": aviso}
+            "t_gfs": t_gfs_crudo_c(X_t, cargar_static()), "aviso": aviso,
+            "aviso_horas": advertencia_horas_faltantes(faltan)}
 
 
 def tabla_por_hora(t_noche, t_modelo, t_gfs, umbral_c):
@@ -151,6 +149,8 @@ except Exception:
 try:
     if res["aviso"]:
         st.warning(res["aviso"])
+    if res["aviso_horas"]:
+        st.warning(res["aviso_horas"])
     nombre_cultivo = umbral.get("nombre", cultivo)
     inicio_noche = a_hora_lima(f"{noche}00")
     st.subheader(f"Noche del {inicio_noche:%d/%m} al {inicio_noche + pd.Timedelta(days=1):%d/%m} · "
