@@ -7,6 +7,8 @@ Envía el aviso de helada de la noche al canal de Telegram (T18 · HU-05).
 - El token y el canal se leen de variables de entorno (nunca van en el repo):
     TELEGRAM_BOT_TOKEN   token del bot (lo da @BotFather)
     TELEGRAM_CHAT_ID     canal, por ejemplo @helada_andina (el bot debe ser administrador del canal)
+  Si existe un archivo .env en la raíz del repo (en .gitignore; ver .env.example), se cargan sus
+  valores, sin pisar las variables que ya estén definidas en el entorno.
 - Modo de prueba (--prueba): arma y muestra los mensajes, sin red de Telegram, sin token y sin
   registrar nada.
 
@@ -29,6 +31,7 @@ if str(APP) not in sys.path:
     sys.path.insert(0, str(APP))
 
 MAX_CARACTERES = 600
+RUTA_ENV = APP.parent / ".env"
 RUTA_REGISTRO = Path(__file__).resolve().parent / "avisos_enviados.sqlite"
 API = "https://api.telegram.org/bot{token}/sendMessage"
 TIEMPO_ESPERA = 20
@@ -80,8 +83,31 @@ def marcar_enviado(con, zona, noche, message_id=None):
     con.commit()
 
 
+def cargar_env(ruta=None):
+    """Carga KEY=VALOR de .env en el entorno sin pisar lo que ya esté definido. Sin dependencias.
+    Ignora líneas vacías y comentarios (#), y quita comillas simples o dobles alrededor del valor.
+    Devuelve los nombres que cargó (nunca los valores)."""
+    ruta = Path(ruta or RUTA_ENV)
+    if not ruta.is_file():
+        return []
+    cargadas = []
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        nombre, valor = (x.strip() for x in linea.split("=", 1))
+        if nombre.startswith("export "):
+            nombre = nombre[len("export "):].strip()
+        if len(valor) >= 2 and valor[0] == valor[-1] and valor[0] in "\"'":
+            valor = valor[1:-1]
+        if nombre and valor and nombre not in os.environ:
+            os.environ[nombre] = valor
+            cargadas.append(nombre)
+    return cargadas
+
+
 def configuracion():
-    """(token, chat_id) desde las variables de entorno."""
+    """(token, chat_id) desde las variables de entorno (o .env, cargado por main())."""
     token, chat = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip(), os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     faltan = [n for n, v in (("TELEGRAM_BOT_TOKEN", token), ("TELEGRAM_CHAT_ID", chat)) if not v]
     if faltan:
@@ -146,6 +172,7 @@ def main(argv=None):
     a = p.parse_args(argv)
     from aviso import calcular_avisos
 
+    cargar_env()
     try:
         if not a.prueba:
             configuracion()                            # falla antes de calcular si no hay token
