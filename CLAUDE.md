@@ -72,7 +72,7 @@ Open-Meteo (GFS) → gfs_forecast.py (caché) → ventanas t-2,t-1,t → predict
 - Regla para dependencias: no instalar nada que no se necesite ahora; anotar licencia en `docs/licencias.md`; versiones fijas en el `requirements`.
 
 ## 6. Flujo de trabajo
-- Plan y tablero: GitHub Projects "Vicuña · Hackathon IA PUCP"; las tareas T01…T50 están en `specs/001-producto/tasks.md` y las historias de usuario (HU) en `specs/001-producto/historias-usuario.md`.
+- Plan y tablero: GitHub Projects "Vicuña · Hackathon IA PUCP"; las tareas T01…T51 están en `specs/001-producto/tasks.md` y las historias de usuario (HU) en `specs/001-producto/historias-usuario.md`.
 - Producto: spec → plan → tareas → PRs pequeños. Una etapa por mensaje, con aprobación humana.
 - Modelo: hipótesis → cambio mínimo → métrica local (corte temporal) → registrar en `docs/modelo/experimentos.md` → solo entonces un envío a Kaggle. No ajustar al leaderboard público.
 - Cada tarea enlaza una HU y tiene criterios de aceptación. **Ninguna tarea pasa a Done si no cumple todos sus criterios**: el PR los lista marcados y los verifica una persona distinta a quien hizo la tarea.

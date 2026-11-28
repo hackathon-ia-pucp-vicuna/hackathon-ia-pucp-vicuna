@@ -23,7 +23,7 @@ Skill de trabajo para el repo del concurso. Si el repo tiene su propio `CLAUDE.m
 - Equipo: Vicuña (idéntico en Luma y Kaggle, con la "ñ").
 - Meta interna de entrega: sábado 5 dic (2–3 días antes del cierre). Vie 4 dic: video, prueba en máquina limpia y última submission. 6–7 dic: colchón solo para errores graves.
 - Producto elegido: **Helada Andina** (alertas de helada para agricultores y técnicos agrarios del Callejón de Huaylas; papa primero). Salida: nivel de riesgo, hora de inicio, duración, recomendación y comparación "GFS crudo vs nuestro modelo". Ventana nocturna 19:00–07:00 Lima (00, 03, 06, 09, 12 UTC). Umbrales en `thresholds.yaml` con `fuente` y `validado`; sin fuente, solo referencia de 0 °C.
-- Especificación y tareas: `specs/001-producto/` (`spec.md`, `plan.md`, `tasks.md`, T01–T50). Tablero: GitHub Project "Vicuña · Hackathon IA PUCP" (Kanban To do / In progress / Done, 3 sprints).
+- Especificación y tareas: `specs/001-producto/` (`spec.md`, `plan.md`, `tasks.md`, T01–T51). Tablero: GitHub Project "Vicuña · Hackathon IA PUCP" (Kanban To do / In progress / Done, 3 sprints).
 
 ## Reglas que descalifican (nunca romperlas)
 1. En Kaggle solo se usa la data oficial, para entrenar y predecir. Se permiten modelos preentrenados públicos y variables derivadas de la data oficial. Ningún otro dataset.
@@ -63,7 +63,7 @@ Orden: (1) lo que trae la plantilla; (2) biblioteca estándar; (3) lo ya instala
 - Producto: lo más simple que cumpla la spec (por defecto Streamlit o Gradio). Extras (LLM, quechua, chatbot, alertas) solo si la spec los justifica, con plan B si el servicio externo falla y sin claves en el repo.
 
 ## Historias de usuario y criterios de aceptación (obligatorios)
-- Las HU están en `specs/001-producto/historias-usuario.md` (HU-01 a HU-11) y las tareas T01–T50 en `specs/001-producto/tasks.md`. Cada tarea enlaza una HU y trae sus criterios de aceptación, que también están en la tarjeta del tablero de GitHub Projects.
+- Las HU están en `specs/001-producto/historias-usuario.md` (HU-01 a HU-11) y las tareas T01–T51 en `specs/001-producto/tasks.md`. Cada tarea enlaza una HU y trae sus criterios de aceptación, que también están en la tarjeta del tablero de GitHub Projects.
 - **Ninguna tarea pasa a Done si no cumple TODOS sus criterios de aceptación.** Antes de mover una tarjeta a Done o de pedir merge: listar los criterios, comprobar cada uno con evidencia (prueba, salida, archivo, enlace) y marcarlos en el PR.
 - La verificación final la hace una persona distinta a quien hizo la tarea. Un criterio nunca se omite en silencio: si no se puede cumplir, se discute en el PR y se cambia con aprobación del equipo.
 - Al crear una tarea o HU nueva: redactar primero los criterios (Dado/Cuando/Entonces o condición medible), luego implementar.
@@ -82,7 +82,7 @@ Orden: (1) lo que trae la plantilla; (2) biblioteca estándar; (3) lo ya instala
 - Empezar en Sonnet; subir a Opus si una tarea falla dos veces.
 
 ## Checklist de cierre (meta interna: sáb 5 dic; límite oficial: 8 dic 23:59)
-- [ ] Todas las tareas T01–T50 están en Done con sus criterios de aceptación cumplidos y verificados.
+- [ ] Todas las tareas T01–T51 están en Done con sus criterios de aceptación cumplidos y verificados.
 - [ ] Predicciones enviadas a Kaggle como Vicuña y 2 submissions finales elegidas.
 - [ ] Repo público con `submission_notebook.ipynb`, pesos (o link), `app/`, `requirements.txt`, README y `REPORTE_PRODUCTO.md`.
 - [ ] Producto desplegado o README que lo ejecute en pocos pasos, probado desde cero.
